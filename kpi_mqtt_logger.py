@@ -5,10 +5,12 @@ import sys
 import datetime
 import utils
 import click
+import json
 
 EXPERIMENT_ID = "24GHZ_OQPSK"
 LOG_DIR_NAME = 'logs'
 log_file_path = ''
+first_record = True
 def on_connect(client, userdata, flags, rc):
  
     if rc == 0:
@@ -60,20 +62,16 @@ def prepare_log_file():
     return log_file_path
 
 def log_data (data):
-    
-    print 'inside log_data'
     global log_file_path
-    print log_file_path
     ts = datetime.datetime.now()
     with open(log_file_path, 'a') as f:
-        print "file open\n"
         log = {
             'name': EXPERIMENT_ID,
-            'timestamp': time.ctime()
+            'timestamp': time.ctime(),
+            'data':json.loads(data)
         }
-        log['data'] = data
-        print log
-        f.write('{}\n'.format(log))
+        f.write('{}\n'.format(json.dumps(log)))
+
 
 
 Connected = False   #global variable for the state of the connection
