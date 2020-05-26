@@ -7,7 +7,7 @@ import utils
 import click
 import json
 
-EXPERIMENT_ID = "24GHZ_OQPSK"
+EXPERIMENT_ID = "OFDMSUBGHZ_62MOTES"
 LOG_DIR_NAME = 'logs'
 log_file_path = ''
 first_record = True
