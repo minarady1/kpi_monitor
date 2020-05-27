@@ -7,7 +7,7 @@ import utils
 import click
 import json
 
-EXPERIMENT_ID = "OFDMSUBGHZ_62MOTES"
+EXPERIMENT_ID = "OFDMSUBGHZ_62MOTES_STATLOGS"
 LOG_DIR_NAME = 'logs'
 log_file_path = ''
 first_record = True
