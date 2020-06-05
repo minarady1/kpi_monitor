@@ -226,7 +226,7 @@ for network_setting in network_settings:
     plt.figure(figure_index)
     plt.plot(x_ax, avg_dutyCycle, label= network_setting)
     l,h = std_add_subtract (avg_dutyCycle,avg_dutyCycle_std)
-    plt.fill_between( x_ax,l,h, alpha=0.2)
+    plt.fill_between( x_ax,avg_dutyCycle_first_q,avg_dutyCycle_third_q, alpha=0.2)
     plt.xlabel('Timespan (mins)')
     plt.ylabel('Average Duty Cycle')
     
@@ -234,7 +234,7 @@ for network_setting in network_settings:
     plt.figure(figure_index)
     plt.plot(x_ax,avg_dutyCycleTx, label= network_setting)
     l,h = std_add_subtract (avg_dutyCycleTx,avg_dutyCycleTx_std)
-    plt.fill_between( x_ax,l,h, alpha=0.2)
+    plt.fill_between( x_ax,avg_dutyCycleTx_first_q,avg_dutyCycleTx_third_q, alpha=0.2)
     plt.xlabel('Timespan (mins)')
     plt.ylabel('Average Tx Duty Cycle')
     
@@ -270,7 +270,7 @@ for network_setting in network_settings:
     plt.figure(figure_index)
     plt.plot(x_ax,avg_pdr, label= network_setting)
     l,h = std_add_subtract (avg_pdr,avg_pdr_std)
-    plt.fill_between( x_ax,l,h, alpha=0.2)
+    plt.fill_between( x_ax,avg_pdr_first_q,avg_pdr_third_q, alpha=0.2)
     plt.xlabel('Timespan (mins)')
     plt.ylabel('Average PDR')
     
@@ -324,12 +324,13 @@ for network_setting in network_settings:
 
     #cdf plot for time to first packet
     figure_index+=1
-    sortedtime = np.sort(time_to_firstpacket)
+    time_to_firstpacket_mins= [float(i/60) for i in time_to_firstpacket]
+    sortedtime = np.sort(time_to_firstpacket_mins)
     num_bins = 100
     counts, bin_edges = np.histogram (sortedtime, bins=num_bins, normed=True)
     cdf = np.cumsum (counts)
     plt.figure(figure_index)
-    plt.plot (bin_edges[1:], cdf/cdf[-1],label= network_setting)
+    plt.plot ( bin_edges[1:], cdf/cdf[-1],label= network_setting)
     plt.xlabel('Time to First Packet (seconds)')
     plt.ylabel('F(x)')
 
