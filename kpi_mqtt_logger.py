@@ -1,5 +1,6 @@
 import paho.mqtt.client as mqttClient
 import time
+import datetime
 import os
 import sys
 import datetime
@@ -7,7 +8,8 @@ import utils
 import click
 import json
 
-EXPERIMENT_ID = "OFDMSUBGHZ_62MOTES_STATLOGS"
+EXPERIMENT_ID = "OQPSK24GHZ_65MOTES"
+run_id = "STATLOGS_5"
 LOG_DIR_NAME = 'logs'
 log_file_path = ''
 first_record = True
@@ -29,7 +31,7 @@ def on_message(client, userdata, message):
     log_data(message.payload)
 
 def prepare_log_file():
-    log_dir_path = os.path.join(os.path.dirname(__file__), LOG_DIR_NAME)
+    log_dir_path = os.path.join(os.path.dirname(__file__), LOG_DIR_NAME,run_id)
 
     # make sure we have the log directory
     if os.path.isdir(log_dir_path):
@@ -42,7 +44,7 @@ def prepare_log_file():
             sys.exit('Failed to make the log directory: {}'.format(err))
 
     # decide a log file name and create it
-    log_file_name = 'log-kpis-{}-{}.jsonl'.format(EXPERIMENT_ID,
+    log_file_name = 'log-kpis-{}_{}-{}.jsonl'.format(EXPERIMENT_ID, run_id,
         time.strftime('%Y%m%d-%H%M%S')
     )
     log_file_path = os.path.join(log_dir_path, log_file_name)
@@ -67,7 +69,7 @@ def log_data (data):
     with open(log_file_path, 'a') as f:
         log = {
             'name': EXPERIMENT_ID,
-            'timestamp': time.ctime(),
+            'timestamp': datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f"),
             'data':json.loads(data)
         }
         f.write('{}\n'.format(json.dumps(log)))
