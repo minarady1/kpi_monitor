@@ -8,8 +8,8 @@ import utils
 import click
 import json
 
-EXPERIMENT_ID = "OQPSK24GHZ_65MOTES"
-run_id = "STATLOGS_5"
+EXPERIMENT_ID = "fsk_41sf_45nbrs"
+run_id = "run_4"
 LOG_DIR_NAME = 'logs'
 log_file_path = ''
 first_record = True
@@ -89,6 +89,7 @@ client.on_connect= on_connect                      #attach function to callback
 client.on_message= on_message                      #attach function to callback
 
 log_file_path = prepare_log_file() 
+print log_file_path
 client.connect(broker_address, port=port)          #connect to broker
  
 client.loop_start()        #start the loop
