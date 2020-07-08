@@ -11,7 +11,8 @@ def init_stat_info():
         "min_v":[],
         "max_v":[],
         "first_q":[],
-        "third_q":[]
+        "third_q":[],
+        "raw":[]
     }
 
 global_stats={
@@ -34,7 +35,8 @@ def data_describe (data):
     third_q = np.quantile(data, 0.75)   
     return mean,median,std,min(data),max(data),first_q,third_q;
 
-def update_globalstats (kpi,mean,median,std,min_v,max_v,first_q,third_q):
+def update_globalstats (kpi,raw):
+    mean,median,std,min_v,max_v,first_q,third_q = data_describe(raw)
     global_stats [kpi]['mean'].append(mean)
     global_stats [kpi]['median'].append(median)
     global_stats [kpi]['std'].append(std)
@@ -42,8 +44,23 @@ def update_globalstats (kpi,mean,median,std,min_v,max_v,first_q,third_q):
     global_stats [kpi]['max_v'].append(max_v)
     global_stats [kpi]['first_q'].append(first_q)
     global_stats [kpi]['third_q'].append(third_q)
+    global_stats [kpi]['raw'].append(raw)
 
 
+def clear_globalstats():
+    global global_stats
+    
+    global_stats={
+    "pdr":init_stat_info(),
+    "latency":init_stat_info(),
+    "dagRank":init_stat_info(),
+    "maxBufferSize":init_stat_info(),
+    "minBufferSize":init_stat_info(),
+    "numCellsUsage":init_stat_info(),
+    "numNeighbors":init_stat_info(),
+    "dutyCycle":init_stat_info(),
+    "dutyCycleTx":init_stat_info()
+    }
 
 # returns normalized datetime array in mins
 def datetime_arr_normalize (arr):
@@ -58,6 +75,11 @@ def datetime_arr_normalize (arr):
     return delta_arr
 
 def get_kpis(network_setting,log_dir_path):
+    print "****"
+    print len (global_stats['pdr']['mean'])
+    clear_globalstats()
+    print len (global_stats['pdr']['mean'])
+    print "----"
     raw_data = {}
 
     # the main timestamp, used through windows
@@ -87,17 +109,19 @@ def get_kpis(network_setting,log_dir_path):
 
                     #populate dictionary of avg _kpi for each mote 
                     if src_id in raw_data:
-                        raw_data[src_id]['counter'].append(pkt_info['counter'])
-                        raw_data[src_id]['latency'].append(pkt_info['latency'])
-                        raw_data[src_id]['dagRank'].append(pkt_info['dagRank'])
-                        raw_data[src_id]['maxBufferSize'].append(pkt_info['maxBufferSize'])
-                        raw_data[src_id]['minBufferSize'].append(pkt_info['minBufferSize'])
-                        raw_data[src_id]['numCellsUsedTx'].append(pkt_info['numCellsUsedTx'])
-                        raw_data[src_id]['numCellsUsedRx'].append(pkt_info['numCellsUsedRx'])
-                        raw_data[src_id]['numNeighbors'].append(pkt_info['numNeighbors'])
-                        raw_data[src_id]['dutyCycle'].append(float(pkt_info['numTicksOn'])/float(pkt_info['numTicksInTotal']))
-                        raw_data[src_id]['dutyCycleTx'].append(float(pkt_info['numTicksTx'])/float(pkt_info['numTicksInTotal']))
-                        raw_data[src_id]['timedelta'].append(data["data"]['time_elapsed']["seconds"])
+                        # ignore duplicate data. 
+                        if (pkt_info['counter'] not in raw_data[src_id]['counter']):
+                            raw_data[src_id]['counter'].append(pkt_info['counter'])
+                            raw_data[src_id]['latency'].append(pkt_info['latency'])
+                            raw_data[src_id]['dagRank'].append(pkt_info['dagRank'])
+                            raw_data[src_id]['maxBufferSize'].append(pkt_info['maxBufferSize'])
+                            raw_data[src_id]['minBufferSize'].append(pkt_info['minBufferSize'])
+                            raw_data[src_id]['numCellsUsedTx'].append(pkt_info['numCellsUsedTx'])
+                            raw_data[src_id]['numCellsUsedRx'].append(pkt_info['numCellsUsedRx'])
+                            raw_data[src_id]['numNeighbors'].append(pkt_info['numNeighbors'])
+                            raw_data[src_id]['dutyCycle'].append(float(pkt_info['numTicksOn'])/float(pkt_info['numTicksInTotal']))
+                            raw_data[src_id]['dutyCycleTx'].append(float(pkt_info['numTicksTx'])/float(pkt_info['numTicksInTotal']))
+                            raw_data[src_id]['timedelta'].append(data["data"]['time_elapsed']["seconds"])
                     else:
                         raw_data[src_id] = {
                             'counter'        : [pkt_info['counter']],
@@ -152,8 +176,8 @@ def get_kpis(network_setting,log_dir_path):
             compute all the averages as usual
             add them to the averages aray
     '''
-    windowsize= 180 #secs, should be around 15 samples for 15 minutes
-    max_duration = 60*30 #90 minutes
+    windowsize= 60*3 #secs, should be around 15 samples for 15 minutes
+    max_duration = 60*90 #90 minutes
     
     t1 = 0
     t2 = t1+windowsize
@@ -234,31 +258,23 @@ def get_kpis(network_setting,log_dir_path):
                 arr_avg_dutyCycleTx_all.append(avg_dutyCycleTx)
 
         # at this point, you have all the data for this window.
-        mean,median,std,min_v,max_v,first_q,third_q = data_describe(arr_avg_pdr_all)
-        update_globalstats('pdr',mean,median,std,min_v,max_v,first_q,third_q)
+        update_globalstats('pdr',arr_avg_pdr_all)
 
-        mean,median,std,min_v,max_v,first_q,third_q = data_describe(arr_avg_latency_all)
-        update_globalstats('latency',mean,median,std,min_v,max_v,first_q,third_q)
-        mean,median,std,min_v,max_v,first_q,third_q = data_describe(arr_avg_dagRank_all)
-        update_globalstats('dagRank',mean,median,std,min_v,max_v,first_q,third_q)
+        update_globalstats('latency',arr_avg_latency_all)
+        
+        update_globalstats('dagRank',arr_avg_dagRank_all)
 
-        mean,median,std,min_v,max_v,first_q,third_q = data_describe(arr_avg_maxBufferSize_all)
-        update_globalstats('maxBufferSize',mean,median,std,min_v,max_v,first_q,third_q)
+        update_globalstats('maxBufferSize',arr_avg_maxBufferSize_all)
 
-        mean,median,std,min_v,max_v,first_q,third_q = data_describe(arr_avg_minBufferSize_all)
-        update_globalstats('minBufferSize',mean,median,std,min_v,max_v,first_q,third_q)
+        update_globalstats('minBufferSize',arr_avg_minBufferSize_all)
 
-        mean,median,std,min_v,max_v,first_q,third_q = data_describe(arr_avg_numCellsUsage_all)
-        update_globalstats('numCellsUsage',mean,median,std,min_v,max_v,first_q,third_q)
+        update_globalstats('numCellsUsage',arr_avg_numCellsUsage_all)
 
-        mean,median,std,min_v,max_v,first_q,third_q = data_describe(arr_avg_numNeighbors_all)
-        update_globalstats('numNeighbors',mean,median,std,min_v,max_v,first_q,third_q)
+        update_globalstats('numNeighbors',arr_avg_numNeighbors_all)
 
-        mean,median,std,min_v,max_v,first_q,third_q = data_describe(arr_avg_dutyCycle_all)
-        update_globalstats('dutyCycle',mean,median,std,min_v,max_v,first_q,third_q)
+        update_globalstats('dutyCycle',arr_avg_dutyCycle_all)
 
-        mean,median,std,min_v,max_v,first_q,third_q = data_describe(arr_avg_dutyCycleTx_all)
-        update_globalstats('dutyCycleTx',mean,median,std,min_v,max_v,first_q,third_q)
+        update_globalstats('dutyCycleTx',arr_avg_dutyCycleTx_all)
 
         # print "{}->{}".format(t1,t2)
         
@@ -271,4 +287,4 @@ def get_kpis(network_setting,log_dir_path):
     rpl_timestamp = datetime_arr_normalize(rpl_timestamp_s)
     return  global_stats, rpl_node_count,rpl_churn,timestamp,rpl_timestamp,time_to_firstpacket;
 
-#get_kpis ("openqueuestats",os.path.join(os.getcwd(), "logs","temp"))
+# get_kpis ("fsk_2",os.path.join(os.getcwd(), "logs","run_5"))

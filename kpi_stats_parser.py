@@ -10,6 +10,7 @@ import getKPI
 
 
 LOG_DIR_NAME = 'logs'
+PLOT_DIR_NAME = 'plots'
 #network_settings = ['24GHZ_62MOTES','OFDMSUBGHZ_62MOTES','FSKSUBGHZ_62MOTES']
 #network_settings = ['OFDMSUBGHZ_62MOTES_STATLOGS','FSKSUBGHZ_62MOTES_STATLOGS']
 #network_settings = ['FSK1_Subghz_run_1','OFDM1_MCS3_Subghz_run_1','OQPSK_24GHz_run_1']
@@ -26,12 +27,14 @@ LOG_DIR_NAME = 'logs'
 #network_settings = ['fsk_41sf_45nbrs','fsk_30ppm_101sf_2min626_3500desync']
 #labels = ['FSK1_868MHz_41SF','FSK1_868MHz_101SF']
 
-network_settings = ['openqueuestats']
-labels = ['openqueuestats']
-run_id = "temp"
+# network_settings = ['fsk_2','ofdm','oqpsk_2']
+# labels = ['FSK_868MHz','OFDM_868MHz','OQPSK_2.4GHz']
+network_settings = ['fsk']
+labels = ['FSK_868MHz']
+run_id = "run_5"
 
 log_dir_path = os.path.join(os.getcwd(), LOG_DIR_NAME,run_id)
-plot_dir_path = os.path.join(os.getcwd(), 'plots', run_id)
+plot_dir_path = os.path.join(os.getcwd(), PLOT_DIR_NAME, run_id)
 if not os.path.exists(plot_dir_path):
     os.makedirs(plot_dir_path)
 #============================ data describer ==================================
@@ -71,19 +74,42 @@ for network_setting in network_settings:
 
     figure_index+=1
     plt.figure(figure_index)
-    plt.plot(x_ax, global_stats ['dutyCycle']['mean'], label= labels [iterate])
+    plt.plot(x_ax, global_stats ['dutyCycle']['median'], label= labels [iterate])
     plt.fill_between( x_ax,global_stats ['dutyCycle']['first_q'],global_stats ['dutyCycle']['third_q'], alpha=0.2)
     plt.xlim(XLIMIT) 
-    plt.ylabel('Average Duty Cycle')
+    plt.ylabel('Average radio duty cycle')
     plt.xlabel(XLABEL)
+    
+
+    #figure_index+=1
+    #sorted_data = []
+    #xdata = []
+    #ydata = []
+    #zdata = []
+
+    #num_bins = 10
+    #for r in global_stats ['dutyCycle']['raw']:
+    #    sorted_data=np.sort(r)
+    #    counts, bin_edges = np.histogram (sorted_data, bins=num_bins, normed=True)
+    #    xdata = bin_edges[1:]
+    #    cdf = np.cumsum (counts)
+
+    #plt.figure(figure_index)
+    #plt.plot ( bin_edges[1:], cdf/cdf[-1],label= labels [iterate])
+    #plt.figure(figure_index)
+    #plt.plot(x_ax, global_stats ['dutyCycle']['median'], label= labels [iterate])
+    
+    # plt.xlim(XLIMIT) 
+    # plt.ylabel('Average radio duty cycle')
+    # plt.xlabel(XLABEL)
 
     
     figure_index+=1
     plt.figure(figure_index)
-    plt.plot(x_ax, global_stats ['dutyCycleTx']['mean'], label= labels [iterate])
+    plt.plot(x_ax, global_stats ['dutyCycleTx']['median'], label= labels [iterate])
     plt.fill_between( x_ax,global_stats ['dutyCycleTx']['first_q'],global_stats ['dutyCycleTx']['third_q'], alpha=0.2)
     plt.xlim(XLIMIT) 
-    plt.ylabel('Average Tx Duty Cycle (%)')
+    plt.ylabel('Average radio transmission duty cycle (%)')
     plt.xlabel(XLABEL)
 
     #figure_index+=1
@@ -109,18 +135,17 @@ for network_setting in network_settings:
     avg_latency_std_ms = [i*.04 for i in global_stats ['latency']['std']]
     avg_latency_first_q_ms = [i*.04 for i in global_stats ['latency']['first_q']]
     avg_latency_third_q_ms = [i*.04 for i in global_stats ['latency']['third_q']]
-    plt.plot(x_ax,avg_latency_ms, label= labels [iterate])
+    plt.plot(x_ax,avg_latency_median_ms, label= labels [iterate])
     plt.fill_between( x_ax,avg_latency_first_q_ms,avg_latency_third_q_ms, alpha=0.2)
     plt.xlim(XLIMIT) 
-    plt.ylabel('Average Latency (secs)')
+    plt.ylabel('Average end-to-end latency (secs)')
     plt.xlabel(XLABEL)
 
     figure_index+=1
     plt.figure(figure_index)
     plt.plot(x_ax,global_stats ['pdr']['mean'], label= labels [iterate])
-    plt.fill_between( x_ax,global_stats ['pdr']['first_q'],global_stats ['pdr']['third_q'], alpha=0.2)
     plt.xlim(XLIMIT) 
-    plt.ylabel('Average End-to-End PDR')
+    plt.ylabel('Average end-to-end PDR')
     plt.xlabel(XLABEL)
 
     figure_index+=1
@@ -128,7 +153,7 @@ for network_setting in network_settings:
     plt.plot(x_ax,global_stats ['numCellsUsage']['mean'], label= labels [iterate])
     plt.fill_between( x_ax,global_stats ['numCellsUsage']['first_q'],global_stats ['numCellsUsage']['third_q'], alpha=0.2)
     plt.xlim(XLIMIT) 
-    plt.ylabel('Average Cells Usage')
+    plt.ylabel('Average cells usage')
     plt.xlabel(XLABEL)
 
     figure_index+=1
@@ -136,7 +161,19 @@ for network_setting in network_settings:
     plt.plot(x_ax,global_stats ['numCellsUsage']['mean'], label= labels [iterate])
     plt.fill_between( x_ax,global_stats ['numCellsUsage']['first_q'],global_stats ['numCellsUsage']['third_q'], alpha=0.2)
     plt.xlim(XLIMIT) 
-    plt.ylabel('Average Number of Neighbors')
+    plt.ylabel('Average number of neighbors')
+    plt.xlabel(XLABEL)
+
+    figure_index+=1
+    plt.figure(figure_index)
+    # avg_bufferSize_percent = [(i/20)*100 for i in global_stats ['maxBufferSize']['max_v']]
+    # avg_bufferSize_first_q_percent = [(i/20)*100 for i in global_stats ['maxBufferSize']['first_q']]
+    # avg_bufferSize_third_q_percent = [(i/20)*100 for i in global_stats ['maxBufferSize']['third_q']]
+    plt.plot(x_ax,global_stats ['maxBufferSize']['mean'], label= labels [iterate])
+    # plt.fill_between( x_ax,global_stats ['maxBufferSize']['first_q'],global_stats ['maxBufferSize']['third_q'], alpha=0.2)
+    plt.ylim(bottom=0, top=5) 
+    plt.xlim(XLIMIT) 
+    plt.ylabel('Average packet buffer occupancy (packets)')
     plt.xlabel(XLABEL)
 
     figure_index+=1
@@ -145,24 +182,25 @@ for network_setting in network_settings:
     # avg_bufferSize_first_q_percent = [(i/20)*100 for i in global_stats ['maxBufferSize']['first_q']]
     # avg_bufferSize_third_q_percent = [(i/20)*100 for i in global_stats ['maxBufferSize']['third_q']]
     plt.plot(x_ax,global_stats ['maxBufferSize']['max_v'], label= labels [iterate])
-    plt.fill_between( x_ax,global_stats ['maxBufferSize']['first_q'],global_stats ['maxBufferSize']['third_q'], alpha=0.2)
+    # plt.fill_between( x_ax,global_stats ['maxBufferSize']['first_q'],global_stats ['maxBufferSize']['third_q'], alpha=0.2)
     plt.ylim(bottom=0) 
     plt.xlim(XLIMIT) 
-    plt.ylabel('Max Packet Buffer Occupancy (Packets)')
+    plt.ylabel('Maximum packet buffer occupancy in the network (packets)')
     plt.xlabel(XLABEL)
 
     figure_index+=1
     plt.figure(figure_index)
     plt.plot(x_ax,global_stats ['dagRank']['mean'], label= labels [iterate])
     plt.fill_between( x_ax,global_stats ['dagRank']['first_q'],global_stats ['dagRank']['third_q'], alpha=0.2)
-    plt.ylabel('Average DAG Rank')
+    plt.ylabel('Average DAG rank')
+    plt.yscale('log')
     plt.xlim(XLIMIT) 
     plt.xlabel(XLABEL)
 
     figure_index+=1
     plt.figure(figure_index)
     plt.plot(rpl_timestamp,rpl_node_count, label= labels [iterate])
-    plt.ylabel('Network Size (RPL DAG Nodes)')
+    plt.ylabel('Number of nodes reporting DAOs')
     plt.xlabel(XLABEL)
     plt.xlim(XLIMIT) 
 
@@ -170,7 +208,7 @@ for network_setting in network_settings:
     plt.figure(figure_index)
     plt.plot(rpl_timestamp,rpl_churn, label= labels [iterate])
     plt.xlabel(XLABEL)
-    plt.ylabel('Network Churn (RPL  DAG Churn)')
+    plt.ylabel('Network churn (RPL DAG Churn)')
     plt.xlim(XLIMIT) 
 
     #cdf plot for time to first packet
@@ -242,6 +280,13 @@ plt.figure(figure_index)
 plt.grid(True)
 plt.legend()    
 plt.savefig( os.path.join(os.getcwd(), plot_dir_path, 'avg_bufferSize_plot.png') , bbox_inches='tight', dpi=300)
+
+figure_index+=1
+plt.figure(figure_index)
+plt.grid(True)
+plt.legend()    
+plt.savefig( os.path.join(os.getcwd(), plot_dir_path, 'max_bufferSize_plot.png') , bbox_inches='tight', dpi=300)
+
 
 figure_index+=1
 plt.figure(figure_index)

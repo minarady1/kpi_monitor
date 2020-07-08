@@ -8,8 +8,8 @@ import utils
 import click
 import json
 
-EXPERIMENT_ID = "openqueuestats"
-run_id = "temp"
+EXPERIMENT_ID = "fsk_4"
+run_id = "run_5"
 LOG_DIR_NAME = 'logs'
 log_file_path = ''
 first_record = True

@@ -13,9 +13,9 @@ LOG_DIR_NAME = 'logs'
 #network_settings = ['oqpsk_41sf_45nbrs','FSK_SUBGHZ_41SF']
 #network_settings = ['fsk_41sf_45nbrs','ofdm_41sf_45nbrs','oqpsk_41sf_45nbrs']
 #labels = ['FSK1_868MHz','OFDM_868MHz','OQPSK_2.4GHz']
-network_settings = ['openqueuestats']
-labels = ['openqueuestats']
-run_id = "temp"
+network_settings = ['fsk_2','ofdm','oqpsk_2']
+labels = ['FSK_868MHz','OFDM_868MHz','OQPSK_2.4GHz']
+run_id = "run_5"
 
 log_dir_path = os.path.join(os.getcwd(), LOG_DIR_NAME,run_id)
 plot_dir_path = os.path.join(os.getcwd(), 'plots', run_id)
@@ -44,9 +44,9 @@ def std_add_subtract (data_list,std_list):
 
 #for i in range(len(x_axis)):
 #	print '{},{}'.format(x_axis[i],avg_dutyCycle[i],avg_latency[i],avg_pdr[i],avg_cellsUsage[i])
-XLIMIT = [3,90]
+XLIMIT = [0,90]
 TRANSP= 0.04
-fig, axs = plt.subplots(8, sharex=True,figsize=[7.5,13])
+fig, axs = plt.subplots(7, sharex=True,figsize=[7.5,13])
 iterate=-1
 for network_setting in network_settings: 
     iterate+=1
@@ -65,18 +65,20 @@ for network_setting in network_settings:
     
     
     x_ax = timestamp
+    print len(global_stats ['numNeighbors']['mean'])
+    print len(global_stats ['numNeighbors']['first_q'])
+    print len(timestamp)
     figure_index=-1
     
 
     figure_index+=1
     axs[figure_index].plot(x_ax,global_stats ['numNeighbors']['mean'], label= labels [iterate])
-    l,h = std_add_subtract (global_stats ['numNeighbors']['mean'],global_stats ['numNeighbors']['std'])
-    axs[figure_index].fill_between( x_ax,l,h, alpha=0.2)
-    axs[figure_index].set_title('Average Number of Neighbors', fontsize=10)
+    axs[figure_index].fill_between( x_ax,global_stats ['numNeighbors']['first_q'],global_stats ['numNeighbors']['third_q'], alpha=0.2)
+    axs[figure_index].set_title('Average number of neighbors', fontsize=10)
     axs[figure_index].grid(True)
     axs[figure_index].set_ylim([0,40])
-    axs[figure_index].axvspan(0, 20, color='red', alpha=TRANSP)
-    axs[figure_index].axvspan(60, 90, color='blue', alpha=TRANSP)
+    # axs[figure_index].axvspan(0, 20, color='red', alpha=TRANSP)
+    # axs[figure_index].axvspan(60, 90, color='blue', alpha=TRANSP)
     #disturbance event
     #axs[figure_index].axvspan(31, 32, color='red', alpha=0.5) 
     axs[figure_index].set_xlim(XLIMIT)
@@ -94,13 +96,25 @@ for network_setting in network_settings:
     ##axs[figure_index].axvspan(31, 32, color='red', alpha=0.5)    
 
     figure_index+=1
-    axs[figure_index].plot(x_ax,global_stats ['maxBufferSize']['max_v'], label= labels [iterate])
-    axs[figure_index].fill_between( x_ax,global_stats ['maxBufferSize']['first_q'],global_stats ['maxBufferSize']['third_q'], alpha=0.2)
-    axs[figure_index].set_title('Max Packet Buffer Occupancy (Packets)', fontsize=10)
-    #axs[figure_index].set_ylim(bottom=0,top=3)
+    axs[figure_index].plot(x_ax,global_stats ['maxBufferSize']['mean'], label= labels [iterate])
+    # axs[figure_index].fill_between( x_ax,global_stats ['maxBufferSize']['first_q'],global_stats ['maxBufferSize']['third_q'], alpha=0.2)
+    axs[figure_index].set_title('Average packet buffer occupancy (packets)', fontsize=10)
+    axs[figure_index].set_ylim(bottom=0, top=5)
     axs[figure_index].axhspan(15, 15, color='red', alpha=0.5)
-    axs[figure_index].axvspan(0, 20, color='red', alpha=TRANSP)
-    axs[figure_index].axvspan(60, 90, color='blue', alpha=TRANSP)
+    # axs[figure_index].axvspan(0, 20, color='red', alpha=TRANSP)
+    # axs[figure_index].axvspan(60, 90, color='blue', alpha=TRANSP)
+    axs[figure_index].grid(True)
+    #disturbance event
+    #axs[figure_index].axvspan(31, 32, color='red', alpha=0.5)
+
+    figure_index+=1
+    axs[figure_index].plot(x_ax,global_stats ['maxBufferSize']['max_v'], label= labels [iterate])
+    # axs[figure_index].fill_between( x_ax,global_stats ['maxBufferSize']['first_q'],global_stats ['maxBufferSize']['third_q'], alpha=0.2)
+    axs[figure_index].set_title('Maximum packet buffer occupancy (packets) (standard priority queue size = 15)', fontsize=10)
+    # axs[figure_index].set_ylim(bottom=0, top=5)
+    axs[figure_index].axhspan(15, 15, color='red', alpha=0.8)
+    # axs[figure_index].axvspan(0, 20, color='red', alpha=TRANSP)
+    # axs[figure_index].axvspan(60, 90, color='blue', alpha=TRANSP)
     axs[figure_index].grid(True)
     #disturbance event
     #axs[figure_index].axvspan(31, 32, color='red', alpha=0.5)
@@ -109,9 +123,11 @@ for network_setting in network_settings:
     axs[figure_index].plot(x_ax,global_stats ['dagRank']['mean'], label= labels [iterate])
     l,h = std_add_subtract (global_stats ['dagRank']['mean'],global_stats ['dagRank']['std'])
     axs[figure_index].fill_between( x_ax,global_stats ['dagRank']['first_q'],global_stats ['dagRank']['third_q'], alpha=0.2)
-    axs[figure_index].axvspan(0, 20, color='red', alpha=TRANSP)
-    axs[figure_index].axvspan(60, 90, color='blue', alpha=TRANSP)
-    axs[figure_index].set_title('Average DAG Rank', fontsize=10)
+    # axs[figure_index].axvspan(0, 20, color='red', alpha=TRANSP)
+    # axs[figure_index].axvspan(60, 90, color='blue', alpha=TRANSP)
+    axs[figure_index].set_yscale('log')
+    axs[figure_index].set_title('Average DAG rank', fontsize=10)
+    # axs[figure_index].set_ylim(bottom=0)
     axs[figure_index].grid(True)
     #disturbance event
     #axs[figure_index].axvspan(31, 32, color='red', alpha=0.5)
@@ -129,10 +145,10 @@ for network_setting in network_settings:
 
     figure_index+=1
     axs[figure_index].plot(rpl_timestamp,rpl_node_count, label= labels [iterate])
-    axs[figure_index].set_title('Network Size (RPL DAG Nodes)', fontsize=10)
+    axs[figure_index].set_title('Number of nodes reporting DAOs', fontsize=10)
     axs[figure_index].grid(True)
-    axs[figure_index].axvspan(0, 20, color='red', alpha=TRANSP)
-    axs[figure_index].axvspan(60, 90, color='blue', alpha=TRANSP)
+    # axs[figure_index].axvspan(0, 20, color='red', alpha=TRANSP)
+    # axs[figure_index].axvspan(60, 90, color='blue', alpha=TRANSP)
     #disturbance event
     #axs[figure_index].axvspan(31, 32, color='red', alpha=0.5)    
 
@@ -146,25 +162,25 @@ for network_setting in network_settings:
     ##disturbance event
     ##axs[figure_index].axvspan(31, 32, color='red', alpha=0.5)
 
-    figure_index+=1
-    axs[figure_index].plot(x_ax,global_stats ['pdr']['mean'], label= labels [iterate])
-    axs[figure_index].fill_between( x_ax,global_stats ['pdr']['first_q'],global_stats ['pdr']['third_q'], alpha=0.2)
-    axs[figure_index].set_title('Average PDR Ratio', fontsize=10)
-    axs[figure_index].grid(True)
-    axs[figure_index].axvspan(0, 20, color='red', alpha=TRANSP)
-    axs[figure_index].axvspan(60, 90, color='blue', alpha=TRANSP)
+    # figure_index+=1
+    # axs[figure_index].plot(x_ax,global_stats ['pdr']['mean'], label= labels [iterate])
+    # axs[figure_index].fill_between( x_ax,global_stats ['pdr']['first_q'],global_stats ['pdr']['third_q'], alpha=0.2)
+    # axs[figure_index].set_title('Average PDR ratio', fontsize=10)
+    # axs[figure_index].grid(True)
+    # axs[figure_index].axvspan(0, 20, color='red', alpha=TRANSP)
+    # axs[figure_index].axvspan(60, 90, color='blue', alpha=TRANSP)
     ##disturbance event
     ##axs[figure_index].axvspan(31, 32, color='red', alpha=0.5)
 
     figure_index+=1
-    axs[figure_index].axvspan(0, 20, color='red', alpha=TRANSP)
-    axs[figure_index].axvspan(60, 90, color='blue', alpha=TRANSP)
-    avg_latency_secs = [i*.04 for i in global_stats ['latency']['mean']]
+    # axs[figure_index].axvspan(0, 20, color='red', alpha=TRANSP)
+    # axs[figure_index].axvspan(60, 90, color='blue', alpha=TRANSP)
+    avg_latency_secs = [i*.04 for i in global_stats ['latency']['median']]
     avg_latency_first_q_secs = [i*.04 for i in global_stats ['latency']['first_q']]
     avg_latency_third_q_secs = [i*.04 for i in global_stats ['latency']['third_q']]
     axs[figure_index].plot(x_ax,avg_latency_secs, label= labels [iterate])
     axs[figure_index].fill_between( x_ax,avg_latency_first_q_secs,avg_latency_third_q_secs, alpha=0.2)
-    axs[figure_index].set_title('Average Latency (secs)', fontsize=10)
+    axs[figure_index].set_title('Average end-to-end latency (secs)', fontsize=10)
     axs[figure_index].grid(True)
     #disturbance event
     #axs[figure_index].axvspan(31, 32, color='red', alpha=0.5)
@@ -185,22 +201,22 @@ for network_setting in network_settings:
     #axs[figure_index].set_title('Average Tx Duty Cycle (%)', fontsize=10)
     #axs[figure_index].grid(True)
     
-    figure_index+=1
-    axs[figure_index].plot(x_ax, global_stats ['dutyCycleTx']['mean'], label= labels [iterate])
-    axs[figure_index].fill_between( x_ax,global_stats ['dutyCycleTx']['first_q'],global_stats ['dutyCycleTx']['third_q'], alpha=0.2)
-    axs[figure_index].set_title('Average Radio Transmission Duty Cycle (%)', fontsize=10)
-    axs[figure_index].grid(True)
-    axs[figure_index].axvspan(0, 20, color='red', alpha=TRANSP)
-    axs[figure_index].axvspan(60, 90, color='blue', alpha=TRANSP)   
+    # figure_index+=1
+    # axs[figure_index].plot(x_ax, global_stats ['dutyCycleTx']['avg_dutyCycle_median'], label= labels [iterate])
+    # axs[figure_index].fill_between( x_ax,global_stats ['dutyCycleTx']['first_q'],global_stats ['dutyCycleTx']['third_q'], alpha=0.2)
+    # axs[figure_index].set_title('Average radio transmission duty cycle (%)', fontsize=10)
+    # axs[figure_index].grid(True)
+    # axs[figure_index].axvspan(0, 20, color='red', alpha=TRANSP)
+    # axs[figure_index].axvspan(60, 90, color='blue', alpha=TRANSP)   
     
     # print figure_index
     figure_index+=1
-    axs[figure_index].plot(x_ax, global_stats ['dutyCycle']['mean'], label= labels [iterate])
+    axs[figure_index].plot(x_ax, global_stats ['dutyCycle']['median'], label= labels [iterate])
     axs[figure_index].fill_between( x_ax,global_stats ['dutyCycle']['first_q'],global_stats ['dutyCycle']['third_q'], alpha=0.2)
-    axs[figure_index].set_title('Average Radio Power Duty Cycle (%)', fontsize=10)
+    axs[figure_index].set_title('Average radio duty cycle (%)', fontsize=10)
     axs[figure_index].grid(True)
-    axs[figure_index].axvspan(0, 20, color='red', alpha=TRANSP)
-    axs[figure_index].axvspan(60, 90, color='blue', alpha=TRANSP)    
+    # axs[figure_index].axvspan(0, 20, color='red', alpha=TRANSP)
+    # axs[figure_index].axvspan(60, 90, color='blue', alpha=TRANSP)    
 
     axs[figure_index].set_xlabel('Time (mins)')
     fig.legend(l,     # The line objects
