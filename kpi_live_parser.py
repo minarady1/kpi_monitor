@@ -1,3 +1,7 @@
+'''
+KPI processing and analytics toolkit for opentestbed
+Author: Mina Rady <mina1.rady@orange.com>, July 2020
+'''
 import time
 
 while(True):
