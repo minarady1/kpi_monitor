@@ -1,17 +1,22 @@
+
 '''
 KPI processing and analytics toolkit for opentestbed
 Author: Mina Rady <mina1.rady@orange.com>, July 2020
 '''
 
+from mpl_toolkits import mplot3d
+from mpl_toolkits.mplot3d import axes3d
 import glob
 import os
 import json
 import datetime
+import matplotlib as mpl
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd  
 import getKPI
 import sys
+import matplotlib.patches as mpatches
 
 
 
@@ -34,21 +39,31 @@ PLOT_DIR_NAME = 'cdf_plots_full'
 #network_settings = ['fsk_41sf_45nbrs','fsk_30ppm_101sf_2min626_3500desync']
 #labels = ['FSK1_868MHz_41SF','FSK1_868MHz_101SF']
 
-# network_settings = ['fsk_2','ofdm_1','oqpsk_2']
-# labels = ['FSK_868MHz','OFDM_868MHz','OQPSK_2.4GHz']
-network_settings = ['fsk_2']
-labels = ['FSK_868MHz']
+network_settings = ['fsk_2','ofdm_1','oqpsk_2']
+labels = ['FSK_868MHz','OFDM_868MHz','OQPSK_2.4GHz']
+colors = ['g','b','r']
+cmaps = ['Greens','Blues','Reds']
+legend_handles = []
+
+it = 0
+for network_setting in network_settings:
+    legend_handles.append (mpatches.Patch(color=colors[it] , label=labels[it]))
+    it+=1
+# network_settings = ['fsk_2']
+# labels = ['FSK_868MHz']
+
 
 run_id = "run_5"
 
 log_dir_path = os.path.join(os.getcwd(), LOG_DIR_NAME,run_id)
 
 class CDF:
-    def __init__ (self, kpi, enforce_lim, xlim, ylim):
+    def __init__ (self, kpi, kpi_label, enforce_lim, xlim, ylim):
         self.xlimit = xlim
         self.kpi = kpi
+        self.kpi_label = kpi_label
         self.ylimit = ylim
-        self.enforce_lim = enforce_lim,
+        self.enforce_lim = enforce_lim
 
     #============================ data describer ==================================
     def data_describe (self,data):
@@ -77,9 +92,12 @@ class CDF:
         kpi_name = self.kpi
         xlimit = self.xlimit
         ylimit = self.ylimit
+
         print kpi_name
         XLABEL = 'Time (mins)'
         iterate=-1
+        plt.figure(0, figsize=[12,9])
+        ax0 = plt.axes(projection='3d')             
         for network_setting in network_settings: 
             iterate+=1
             figure_index=-1
@@ -88,51 +106,42 @@ class CDF:
             sorted_data = []
             num_bins = 100
             i = 3
+            X = []
+            Y = []
+            Z = []
             while i < 90-3:
-                r =  global_stats [kpi_name]['raw'][i*60]
+                r =  global_stats [kpi_name]['raw'][i*60] #[0] 
+                # r =  global_stats [kpi_name]['raw'][0] 
                 sorted_data=np.sort(r)
                 counts, bin_edges = np.histogram (sorted_data, bins=num_bins, normed=True)
                 cdf = np.cumsum (counts)
-                figure_index+=1
-                plt.figure(figure_index)
-                plt.plot ( bin_edges[1:], cdf/cdf[-1],label= "{} @ min {}".format(labels [iterate],i))
-                plt.xlabel(kpi_name)
-                if (self.enforce_lim==1):
-                    print "enforcing lim"
-                    plt.xlim(xlimit)
-                    plt.ylim(ylimit)
-                plt.ylabel('Portion of motes')
-                plt.title('{} CDF cross-section @ min {}'.format(kpi_name,i))
-                plt.grid(True)
-                plt.legend()
-                plot_dir_path = os.path.join(os.getcwd(), PLOT_DIR_NAME, run_id,kpi_name)
-                if not os.path.exists(plot_dir_path):
-                    os.makedirs(plot_dir_path)    
-                plt.savefig( os.path.join(os.getcwd(), plot_dir_path, '{}_cdf_plot_min{}.png'.format(kpi_name,i)) , bbox_inches='tight', dpi=300)                
-                i+=10
+                # print bin_edges[1:]
+                X.append(bin_edges[1:].tolist())
+                Z.append((cdf/cdf[-1]).tolist())
+                Y.append((np.ones(len(bin_edges[1:]))*i).tolist())
+                i+=3
                 # i+=90
-     
+            ax0.plot_surface(X, Y, np.array(Z),cmap=cmaps[iterate],rstride=1,cstride=1, linewidth=0.5, alpha=1,  edgecolor='none', label=labels[iterate])
+            ax0.set_title('{} CDF across time surface plot'.format(self.kpi_label), pad =30)
+            ax0.set_xlabel(self.kpi_label)
+            ax0.set_ylabel('Time(mins)')
+            ax0.set_zlabel('Portion of Motes')
+        ax0.grid(True)
+        ax0.legend(handles=legend_handles)
+       
+        plot_dir_path = os.path.join(os.getcwd(), PLOT_DIR_NAME, run_id)
+        if not os.path.exists(plot_dir_path):
+            os.makedirs(plot_dir_path)
+        plt.savefig( os.path.join(os.getcwd(), plot_dir_path, '{}_full_3d_cdf_plot.png'.format(kpi_name)) , dpi=300)
+        plt.show()
 
-name = sys.argv[1]
-xl = float(sys.argv[2])
-xh=  float(sys.argv[3])
-yl = float(sys.argv[4])
-yh=  float(sys.argv[5])
-enforce_lim = int(sys.argv[6])
-x = [xl,xh]
-y = [yl,yh]
+
+enforce_lim = 0
+x = [0,40]
+y = [0,1]
 print enforce_lim
-x0 = CDF(name,enforce_lim,x,y)
+var_name = sys.argv[1]
+var_label = sys.argv[2]
+x0 = CDF(var_name, var_label,enforce_lim,x,y)
 x0.create_cdf() 
-
-# for i in k:
-    # cdf = CDF(i)
-    # cdf.create_cdf()
-# create_cdf ('maxBufferSize')
-# create_cdf ('latency')
-#create_cdf ('dutyCycle')
-#create_cdf ('numNeighbors')
-# create_cdf ('dagRank')
-# create_cdf ('pdr')
-#plt.show()
 

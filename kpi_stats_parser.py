@@ -31,10 +31,9 @@ PLOT_DIR_NAME = 'plots'
 #network_settings = ['fsk_41sf_45nbrs','fsk_30ppm_101sf_2min626_3500desync']
 #labels = ['FSK1_868MHz_41SF','FSK1_868MHz_101SF']
 
-# network_settings = ['fsk_2','ofdm','oqpsk_2']
-# labels = ['FSK_868MHz','OFDM_868MHz','OQPSK_2.4GHz']
-network_settings = ['fsk']
-labels = ['FSK_868MHz']
+network_settings = ['fsk_2','ofdm_3','oqpsk_2']
+labels = ['FSK_868MHz','OFDM_868MHz','OQPSK_2.4GHz']
+
 run_id = "run_5"
 
 log_dir_path = os.path.join(os.getcwd(), LOG_DIR_NAME,run_id)
@@ -134,13 +133,12 @@ for network_setting in network_settings:
 
     figure_index+=1
     plt.figure(figure_index)
-    avg_latency_ms = [i*.04 for i in global_stats ['latency']['mean']]
-    avg_latency_median_ms = [i*.04 for i in global_stats ['latency']['median']]
-    avg_latency_std_ms = [i*.04 for i in global_stats ['latency']['std']]
-    avg_latency_first_q_ms = [i*.04 for i in global_stats ['latency']['first_q']]
-    avg_latency_third_q_ms = [i*.04 for i in global_stats ['latency']['third_q']]
-    plt.plot(x_ax,avg_latency_median_ms, label= labels [iterate])
-    plt.fill_between( x_ax,avg_latency_first_q_ms,avg_latency_third_q_ms, alpha=0.2)
+    avg_latency_secs = global_stats ['latency']['mean']
+    avg_latency_median_secs = global_stats ['latency']['median']
+    avg_latency_first_q_secs = global_stats ['latency']['first_q']
+    avg_latency_third_q_secs =  global_stats ['latency']['third_q']
+    plt.plot(x_ax,avg_latency_median_secs, label= labels [iterate])
+    plt.fill_between( x_ax,avg_latency_first_q_secs,avg_latency_third_q_secs, alpha=0.2)
     plt.xlim(XLIMIT) 
     plt.ylabel('Average end-to-end latency (secs)')
     plt.xlabel(XLABEL)

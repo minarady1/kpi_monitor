@@ -17,6 +17,8 @@ import sys
 
 LOG_DIR_NAME = 'logs'
 PLOT_DIR_NAME = 'cdf_plots_full'
+DIR_TAG='full_'
+XLABEL=''
 
 #network_settings = ['24GHZ_62MOTES','OFDMSUBGHZ_62MOTES','FSKSUBGHZ_62MOTES']
 #network_settings = ['OFDMSUBGHZ_62MOTES_STATLOGS','FSKSUBGHZ_62MOTES_STATLOGS']
@@ -34,21 +36,20 @@ PLOT_DIR_NAME = 'cdf_plots_full'
 #network_settings = ['fsk_41sf_45nbrs','fsk_30ppm_101sf_2min626_3500desync']
 #labels = ['FSK1_868MHz_41SF','FSK1_868MHz_101SF']
 
-# network_settings = ['fsk_2','ofdm_1','oqpsk_2']
-# labels = ['FSK_868MHz','OFDM_868MHz','OQPSK_2.4GHz']
-network_settings = ['fsk_2']
-labels = ['FSK_868MHz']
+network_settings = ['fsk_2','ofdm_1','oqpsk_2']
+labels = ['FSK_868MHz','OFDM_868MHz','OQPSK_2.4GHz']
+# network_settings = ['fsk_2']
+# labels = ['FSK_868MHz']
 
 run_id = "run_5"
 
 log_dir_path = os.path.join(os.getcwd(), LOG_DIR_NAME,run_id)
 
-class CDF:
-    def __init__ (self, kpi, enforce_lim, xlim, ylim):
-        self.xlimit = xlim
+class FullCDF:
+    def __init__ (self, kpi,t1,t2):
         self.kpi = kpi
-        self.ylimit = ylim
-        self.enforce_lim = enforce_lim,
+        self.t1 = t1
+        self.t2 = t2
 
     #============================ data describer ==================================
     def data_describe (self,data):
@@ -75,59 +76,51 @@ class CDF:
 
     def create_cdf(self):
         kpi_name = self.kpi
-        xlimit = self.xlimit
-        ylimit = self.ylimit
         print kpi_name
-        XLABEL = 'Time (mins)'
         iterate=-1
+        plt.figure(0)
         for network_setting in network_settings: 
             iterate+=1
-            figure_index=-1
-            global_stats, rpl_node_count,rpl_churn,timestamp,rpl_timestamp,time_to_firstpacket = getKPI.get_kpis(network_setting,0,90,3,log_dir_path)
+            global_stats, rpl_node_count,rpl_churn,timestamp,rpl_timestamp,time_to_firstpacket =\
+                getKPI.get_kpis(network_setting,self.t1,self.t2,self.t2-self.t1-1,log_dir_path)
             x_ax = timestamp
             sorted_data = []
             num_bins = 100
             i = 3
             while i < 90-3:
-                r =  global_stats [kpi_name]['raw'][i*60]
+                r =  global_stats [kpi_name]['raw'][0]
+                print "plottting ", network_setting
                 sorted_data=np.sort(r)
                 counts, bin_edges = np.histogram (sorted_data, bins=num_bins, normed=True)
                 cdf = np.cumsum (counts)
-                figure_index+=1
-                plt.figure(figure_index)
-                plt.plot ( bin_edges[1:], cdf/cdf[-1],label= "{} @ min {}".format(labels [iterate],i))
-                plt.xlabel(kpi_name)
-                if (self.enforce_lim==1):
-                    print "enforcing lim"
-                    plt.xlim(xlimit)
-                    plt.ylim(ylimit)
-                plt.ylabel('Portion of motes')
-                plt.title('{} CDF cross-section @ min {}'.format(kpi_name,i))
-                plt.grid(True)
-                plt.legend()
-                plot_dir_path = os.path.join(os.getcwd(), PLOT_DIR_NAME, run_id,kpi_name)
-                if not os.path.exists(plot_dir_path):
-                    os.makedirs(plot_dir_path)    
-                plt.savefig( os.path.join(os.getcwd(), plot_dir_path, '{}_cdf_plot_min{}.png'.format(kpi_name,i)) , bbox_inches='tight', dpi=300)                
-                i+=10
-                # i+=90
+                plt.plot ( bin_edges[1:], cdf/cdf[-1],label= "{}".format(labels [iterate],i))
+                i+=90
+            print "finished ",network_setting," in ",kpi_name
+            plt.figure(0)
+            plt.xlabel(XLABEL)
+            plt.ylabel('Portion of motes')
+            # plt.title('{} CDF of the network between {} and {} mins'.format(kpi_name,))
+            plt.grid(True)
+            plt.legend()
+            plot_dir_path = os.path.join(os.getcwd(), PLOT_DIR_NAME, run_id, DIR_TAG+TAG)
+            if not os.path.exists(plot_dir_path):
+                os.makedirs(plot_dir_path)    
+            plt.savefig( os.path.join(os.getcwd(), plot_dir_path, '{}_cdf_plot_full_{}.png'.format(kpi_name,TAG)) , bbox_inches='tight', dpi=300)
+            print "finished ", kpi_name
      
 
 name = sys.argv[1]
-xl = float(sys.argv[2])
-xh=  float(sys.argv[3])
-yl = float(sys.argv[4])
-yh=  float(sys.argv[5])
-enforce_lim = int(sys.argv[6])
-x = [xl,xh]
-y = [yl,yh]
-print enforce_lim
-x0 = CDF(name,enforce_lim,x,y)
+t1 = int(sys.argv[2])
+t2 = int(sys.argv[3])
+TAG = sys.argv[4]
+XLABEL = sys.argv[5]
+
+x0 = FullCDF(name,t1,t2)
 x0.create_cdf() 
 
 # for i in k:
-    # cdf = CDF(i)
-    # cdf.create_cdf()
+# cdf = CDF(i)
+# cdf.create_cdf()
 # create_cdf ('maxBufferSize')
 # create_cdf ('latency')
 #create_cdf ('dutyCycle')

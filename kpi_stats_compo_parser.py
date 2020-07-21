@@ -13,16 +13,21 @@ import getKPI
 import sys
 
 LOG_DIR_NAME = 'logs'
+LOG_PLOT_NAME = 'plots'
 
 #network_settings = ['oqpsk_41sf_45nbrs','FSK_SUBGHZ_41SF']
 #network_settings = ['fsk_41sf_45nbrs','ofdm_41sf_45nbrs','oqpsk_41sf_45nbrs']
 #labels = ['FSK1_868MHz','OFDM_868MHz','OQPSK_2.4GHz']
+# network_settings = ['fsk_2','ofdm','oqpsk_2']
+# labels = ['FSK_868MHz','OFDM_868MHz','OQPSK_2.4GHz']
 network_settings = ['fsk_2','ofdm','oqpsk_2']
 labels = ['FSK_868MHz','OFDM_868MHz','OQPSK_2.4GHz']
+# network_settings = ['fsk_2']
+# labels = ['FSK_868MHz']
 run_id = "run_5"
 
 log_dir_path = os.path.join(os.getcwd(), LOG_DIR_NAME,run_id)
-plot_dir_path = os.path.join(os.getcwd(), 'plots', run_id)
+plot_dir_path = os.path.join(os.getcwd(), LOG_PLOT_NAME, run_id)
 if not os.path.exists(plot_dir_path):
     os.makedirs(plot_dir_path)
 #============================ data describer ==================================
@@ -80,7 +85,7 @@ for network_setting in network_settings:
     axs[figure_index].fill_between( x_ax,global_stats ['numNeighbors']['first_q'],global_stats ['numNeighbors']['third_q'], alpha=0.2)
     axs[figure_index].set_title('Average number of neighbors', fontsize=10)
     axs[figure_index].grid(True)
-    axs[figure_index].set_ylim([0,40])
+    # axs[figure_index].set_ylim([0,40])
     # axs[figure_index].axvspan(0, 20, color='red', alpha=TRANSP)
     # axs[figure_index].axvspan(60, 90, color='blue', alpha=TRANSP)
     #disturbance event
@@ -179,9 +184,9 @@ for network_setting in network_settings:
     figure_index+=1
     # axs[figure_index].axvspan(0, 20, color='red', alpha=TRANSP)
     # axs[figure_index].axvspan(60, 90, color='blue', alpha=TRANSP)
-    avg_latency_secs = [i*.04 for i in global_stats ['latency']['median']]
-    avg_latency_first_q_secs = [i*.04 for i in global_stats ['latency']['first_q']]
-    avg_latency_third_q_secs = [i*.04 for i in global_stats ['latency']['third_q']]
+    avg_latency_secs = global_stats ['latency']['median']
+    avg_latency_first_q_secs = global_stats ['latency']['first_q']
+    avg_latency_third_q_secs = global_stats ['latency']['third_q']
     axs[figure_index].plot(x_ax,avg_latency_secs, label= labels [iterate])
     axs[figure_index].fill_between( x_ax,avg_latency_first_q_secs,avg_latency_third_q_secs, alpha=0.2)
     axs[figure_index].set_title('Average end-to-end latency (secs)', fontsize=10)

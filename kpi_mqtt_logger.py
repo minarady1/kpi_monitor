@@ -8,7 +8,7 @@ import utils
 import click
 import json
 
-EXPERIMENT_ID = "fsk_4"
+EXPERIMENT_ID = "fsk_7_dyn_ebs"
 run_id = "run_5"
 LOG_DIR_NAME = 'logs'
 log_file_path = ''
