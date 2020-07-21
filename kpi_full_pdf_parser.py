@@ -80,8 +80,8 @@ class FullCDF:
         print kpi_name
         iterate=-1
         plt.figure(0)
+        data_list = []
         for network_setting in network_settings: 
-            data_list = []
             iterate+=1
             global_stats, rpl_node_count,rpl_churn,timestamp,rpl_timestamp,time_to_firstpacket =\
                 getKPI.get_kpis(network_setting,self.t1,self.t2,self.t2-self.t1-1,log_dir_path)
@@ -90,21 +90,21 @@ class FullCDF:
             num_bins = 200
             i = 3
             while i < 90-3:
+                r = []
                 r =  global_stats [kpi_name]['raw'][0]
                 data_list.append(np.array(r))
                 i+=90
-            plt.hist(data_list, bins = 'auto', normed=True, label=labels)
-            print "finished ",network_setting," in ",kpi_name
-            plt.figure(0)
-            plt.xlabel(XLABEL)
-            plt.ylabel('Number of data samples')
-            plt.grid(True)
-            plt.legend()
-            plot_dir_path = os.path.join(os.getcwd(), PLOT_DIR_NAME, run_id, DIR_TAG+TAG)
-            if not os.path.exists(plot_dir_path):
-                os.makedirs(plot_dir_path)    
-            plt.savefig( os.path.join(os.getcwd(), plot_dir_path, '{}_cdf_plot_full_{}.png'.format(kpi_name,TAG)) , bbox_inches='tight', dpi=300)
-            print "finished ", kpi_name
+        plt.hist(data_list, denisty=False, bins=NUMBINS, label=labels)
+        plt.figure(0)
+        plt.xlabel(XLABEL)
+        plt.ylabel('Number of data samples')
+        plt.grid(True)
+        plt.legend()
+        plot_dir_path = os.path.join(os.getcwd(), PLOT_DIR_NAME, run_id, DIR_TAG+TAG)
+        if not os.path.exists(plot_dir_path):
+            os.makedirs(plot_dir_path)    
+        plt.savefig( os.path.join(os.getcwd(), plot_dir_path, '{}_pdf_plot_full_{}.png'.format(kpi_name,TAG)) , bbox_inches='tight', dpi=300)
+        print "finished ", kpi_name
      
 
 name = sys.argv[1]

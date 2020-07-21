@@ -98,7 +98,7 @@ class FullCDF:
             print "finished ",network_setting," in ",kpi_name
             plt.figure(0)
             plt.xlabel(XLABEL)
-            plt.ylabel('Portion of motes')
+            plt.ylabel('Portion of data samples')
             # plt.title('{} CDF of the network between {} and {} mins'.format(kpi_name,))
             plt.grid(True)
             plt.legend()
