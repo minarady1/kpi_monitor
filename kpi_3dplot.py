@@ -3,7 +3,7 @@
 KPI processing and analytics toolkit for opentestbed
 Author: Mina Rady <mina1.rady@orange.com>, July 2020
 '''
-
+from scipy.io import savemat
 from mpl_toolkits import mplot3d
 from mpl_toolkits.mplot3d import axes3d
 import glob
@@ -97,7 +97,8 @@ class CDF:
         XLABEL = 'Time (mins)'
         iterate=-1
         plt.figure(0, figsize=[12,9])
-        ax0 = plt.axes(projection='3d')             
+        ax0 = plt.axes(projection='3d')
+        matvars= {}
         for network_setting in network_settings: 
             iterate+=1
             figure_index=-1
@@ -119,27 +120,28 @@ class CDF:
                 X.append(bin_edges[1:].tolist())
                 Z.append((cdf/cdf[-1]).tolist())
                 Y.append((np.ones(len(bin_edges[1:]))*i).tolist())
-                i+=3
+                i+=1
                 # i+=90
+            matvars [network_setting+"X"] = np.array(X)
+            matvars [network_setting+"Y"] = np.array(Y)
+            matvars [network_setting+"Z"] = np.array(Z)
             ax0.plot_surface(X, Y, np.array(Z),cmap=cmaps[iterate],rstride=1,cstride=1, linewidth=0.5, alpha=1,  edgecolor='none', label=labels[iterate])
             ax0.set_title('{} CDF across time surface plot'.format(self.kpi_label), pad =30)
             ax0.set_xlabel(self.kpi_label)
             ax0.set_ylabel('Time(mins)')
-            ax0.set_zlabel('Portion of Motes')
-        ax0.grid(True)
-        ax0.legend(handles=legend_handles)
-       
-        plot_dir_path = os.path.join(os.getcwd(), PLOT_DIR_NAME, run_id)
-        if not os.path.exists(plot_dir_path):
-            os.makedirs(plot_dir_path)
-        plt.savefig( os.path.join(os.getcwd(), plot_dir_path, '{}_full_3d_cdf_plot.png'.format(kpi_name)) , dpi=300)
-        plt.show()
-
+            ax0.set_zlabel('matvars of Motes')
+        savemat("kpi_{}_3d.mat".format(kpi_name), matvars)
+        # ax0.grid(True)
+        # ax0.legend(handles=legend_handles)
+        # plot_dir_path = os.path.join(os.getcwd(), PLOT_DIR_NAME, run_id)
+        # if not os.path.exists(plot_dir_path):
+            # os.makedirs(plot_dir_path)
+        # plt.savefig( os.path.join(os.getcwd(), plot_dir_path, '{}_full_3d_cdf_plot.png'.format(kpi_name)) , dpi=300)
+        # plt.show()
 
 enforce_lim = 0
 x = [0,40]
 y = [0,1]
-print enforce_lim
 var_name = sys.argv[1]
 var_label = sys.argv[2]
 x0 = CDF(var_name, var_label,enforce_lim,x,y)

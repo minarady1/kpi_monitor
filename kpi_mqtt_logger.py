@@ -8,8 +8,8 @@ import utils
 import click
 import json
 
-EXPERIMENT_ID = "fsk_7_dyn_ebs"
-run_id = "run_5"
+EXPERIMENT_ID = "hybrid_test_cjoin"
+run_id = "run_8"
 LOG_DIR_NAME = 'logs'
 log_file_path = ''
 first_record = True
@@ -75,7 +75,7 @@ def log_data (data):
         f.write('{}\n'.format(json.dumps(log)))
 
 
-
+EXPERIMENT_ID = sys.argv[1]
 Connected = False   #global variable for the state of the connection
  
 broker_address= "argus.paris.inria.fr"  #Broker address

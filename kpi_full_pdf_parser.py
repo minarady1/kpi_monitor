@@ -37,13 +37,30 @@ NUMBINS=100
 #network_settings = ['fsk_41sf_45nbrs','fsk_30ppm_101sf_2min626_3500desync']
 #labels = ['FSK1_868MHz_41SF','FSK1_868MHz_101SF']
 
-network_settings = ['fsk_2','ofdm_1','oqpsk_2']
-labels = ['FSK_868MHz','OFDM_868MHz','OQPSK_2.4GHz']
-# network_settings = ['fsk_2']
-# labels = ['FSK_868MHz']
+# network_settings = [ 'g6_fsk_3','g6_oqpsk','g6_hybrid', 'g6_hybrid_qfm_251_2']
+# labels = ['FSK_868MHz','OQPSK_2.4GHz','Hybrid 6TiSCH','Hybrid 6TiSCH OFDM base']
 
-run_id = "run_5"
+# network_settings = ['g6_fsk_4','g6_ofdm','g6_oqpsk','g6_hybrid_qfm_152', 'g6_hybrid_qfm_251','g6_hybrid_qfm_271']
+# labels = ['FSK_868MHz','OFDM_868MHz','OQPSK_2.4GHz','g6TiSCH-OQPSK base','g6TiSCH-OFDM base','g6TiSCH-OFDM base-high FSK']
 
+network_settings = [
+'g6_fsk',
+'g6_ofdm',
+'g6_oqpsk',
+# 'g6_hybrid_qfm_152',
+'g6_hybrid_qfm_251',
+# 'g6_hybrid_qfm_10_dio_1_cell_251'
+]
+labels = [
+'FSK_868MHz',
+'OFDM_868MHz',
+'OQPSK_2.4GHz',
+# 'g6TiSCH-OQPSK base',
+'g6TiSCH', #ofdm base
+# 'g6TiSCH-251-1-mincell'
+]
+
+run_id = "run_8"
 log_dir_path = os.path.join(os.getcwd(), LOG_DIR_NAME,run_id)
 
 class FullCDF:
@@ -83,7 +100,7 @@ class FullCDF:
         data_list = []
         for network_setting in network_settings: 
             iterate+=1
-            global_stats, rpl_node_count,rpl_churn,timestamp,rpl_timestamp,time_to_firstpacket =\
+            global_stats, rpl_node_count,rpl_churn,timestamp,rpl_timestamp,time_to_firstpacket,pdr_table =\
                 getKPI.get_kpis(network_setting,self.t1,self.t2,self.t2-self.t1-1,log_dir_path)
             x_ax = timestamp
             sorted_data = []
@@ -94,16 +111,19 @@ class FullCDF:
                 r =  global_stats [kpi_name]['raw'][0]
                 data_list.append(np.array(r))
                 i+=90
-        plt.hist(data_list, denisty=False, bins=NUMBINS, label=labels)
+        if (kpi_name=='maxBufferSize'):
+            plt.axvline(x=15,linewidth=2, color='r', alpha=0.7, label="High priority limit")
+        plt.hist(data_list, density=True, bins=NUMBINS, label=labels)
         plt.figure(0)
         plt.xlabel(XLABEL)
-        plt.ylabel('Number of data samples')
+        # plt.ylabel('Number of data samples')
+        plt.ylabel('Normalized ratio of data samples')
         plt.grid(True)
         plt.legend()
         plot_dir_path = os.path.join(os.getcwd(), PLOT_DIR_NAME, run_id, DIR_TAG+TAG)
         if not os.path.exists(plot_dir_path):
             os.makedirs(plot_dir_path)    
-        plt.savefig( os.path.join(os.getcwd(), plot_dir_path, '{}_pdf_plot_full_{}.png'.format(kpi_name,TAG)) , bbox_inches='tight', dpi=300)
+        plt.savefig( os.path.join(os.getcwd(), plot_dir_path, '{}_pdf_plot_full_{}_normalized.png'.format(kpi_name,TAG)) , bbox_inches='tight', dpi=300)
         print "finished ", kpi_name
      
 

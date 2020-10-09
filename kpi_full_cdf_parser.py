@@ -19,6 +19,7 @@ LOG_DIR_NAME = 'logs'
 PLOT_DIR_NAME = 'cdf_plots_full'
 DIR_TAG='full_'
 XLABEL=''
+YLABEL=''
 
 #network_settings = ['24GHZ_62MOTES','OFDMSUBGHZ_62MOTES','FSKSUBGHZ_62MOTES']
 #network_settings = ['OFDMSUBGHZ_62MOTES_STATLOGS','FSKSUBGHZ_62MOTES_STATLOGS']
@@ -36,12 +37,30 @@ XLABEL=''
 #network_settings = ['fsk_41sf_45nbrs','fsk_30ppm_101sf_2min626_3500desync']
 #labels = ['FSK1_868MHz_41SF','FSK1_868MHz_101SF']
 
-network_settings = ['fsk_2','ofdm_1','oqpsk_2']
-labels = ['FSK_868MHz','OFDM_868MHz','OQPSK_2.4GHz']
-# network_settings = ['fsk_2']
-# labels = ['FSK_868MHz']
+# network_settings = [ 'g6_fsk_3','g6_oqpsk','g6_hybrid', 'g6_hybrid_qfm_251_2']
+# labels = ['FSK_868MHz','OQPSK_2.4GHz','Hybrid 6TiSCH','Hybrid 6TiSCH OFDM base']
 
-run_id = "run_5"
+# network_settings = ['g6_fsk_4','g6_ofdm','g6_oqpsk','g6_hybrid_qfm_152', 'g6_hybrid_qfm_251']
+# labels = ['FSK_868MHz','OFDM_868MHz','OQPSK_2.4GHz','Hybrid 6TiSCH-OQPSK base','Hybrid 6TiSCH-OFDM base']
+
+network_settings = [
+'g6_fsk',
+'g6_ofdm',
+'g6_oqpsk',
+# 'g6_hybrid_qfm_152',
+'g6_hybrid_qfm_251',
+# 'g6_hybrid_qfm_10_dio_1_cell_251'
+]
+labels = [
+'FSK_868MHz',
+'OFDM_868MHz',
+'OQPSK_2.4GHz',
+# 'g6TiSCH-OQPSK base',
+'g6TiSCH', #ofdm base
+# 'g6TiSCH-251-1-mincell'
+]
+
+run_id = "run_8"
 
 log_dir_path = os.path.join(os.getcwd(), LOG_DIR_NAME,run_id)
 
@@ -81,7 +100,7 @@ class FullCDF:
         plt.figure(0)
         for network_setting in network_settings: 
             iterate+=1
-            global_stats, rpl_node_count,rpl_churn,timestamp,rpl_timestamp,time_to_firstpacket =\
+            global_stats, rpl_node_count,rpl_churn,timestamp,rpl_timestamp,time_to_firstpacket,pdr_table =\
                 getKPI.get_kpis(network_setting,self.t1,self.t2,self.t2-self.t1-1,log_dir_path)
             x_ax = timestamp
             sorted_data = []
@@ -89,24 +108,27 @@ class FullCDF:
             i = 3
             while i < 90-3:
                 r =  global_stats [kpi_name]['raw'][0]
-                print "plottting ", network_setting
+                print "plotting ", network_setting
+                print len(r), " data points"
                 sorted_data=np.sort(r)
-                counts, bin_edges = np.histogram (sorted_data, bins=num_bins, normed=True)
+                counts, bin_edges = np.histogram (sorted_data, bins=num_bins, density=True)
                 cdf = np.cumsum (counts)
                 plt.plot ( bin_edges[1:], cdf/cdf[-1],label= "{}".format(labels [iterate],i))
                 i+=90
             print "finished ",network_setting," in ",kpi_name
-            plt.figure(0)
-            plt.xlabel(XLABEL)
-            plt.ylabel('Portion of data samples')
-            # plt.title('{} CDF of the network between {} and {} mins'.format(kpi_name,))
-            plt.grid(True)
-            plt.legend()
-            plot_dir_path = os.path.join(os.getcwd(), PLOT_DIR_NAME, run_id, DIR_TAG+TAG)
-            if not os.path.exists(plot_dir_path):
-                os.makedirs(plot_dir_path)    
-            plt.savefig( os.path.join(os.getcwd(), plot_dir_path, '{}_cdf_plot_full_{}.png'.format(kpi_name,TAG)) , bbox_inches='tight', dpi=300)
-            print "finished ", kpi_name
+        plt.figure(0)
+        plt.xlabel(XLABEL)
+        plt.ylabel(YLABEL)
+        # if (kpi_name=='maxBufferSize'):
+            # plt.axvline(x=15,linewidth=4, color='k', alpha=0.7, label="High priority limit")
+        # plt.title('{} CDF of the network between {} and {} mins'.format(kpi_name,))
+        plt.grid(True)
+        plt.legend()
+        plot_dir_path = os.path.join(os.getcwd(), PLOT_DIR_NAME, run_id, DIR_TAG+TAG)
+        if not os.path.exists(plot_dir_path):
+            os.makedirs(plot_dir_path)    
+        plt.savefig( os.path.join(os.getcwd(), plot_dir_path, '{}_cdf_plot_full_{}.png'.format(kpi_name,TAG)) , bbox_inches='tight', dpi=300)
+        print "finished ", kpi_name
      
 
 name = sys.argv[1]
@@ -114,6 +136,7 @@ t1 = int(sys.argv[2])
 t2 = int(sys.argv[3])
 TAG = sys.argv[4]
 XLABEL = sys.argv[5]
+YLABEL = sys.argv[6]
 
 x0 = FullCDF(name,t1,t2)
 x0.create_cdf() 
