@@ -11,55 +11,31 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd  
 import getKPI
-
-
+import math
+import pdb
 
 LOG_DIR_NAME = 'logs'
 PLOT_DIR_NAME = 'plots'
-#network_settings = ['24GHZ_62MOTES','OFDMSUBGHZ_62MOTES','FSKSUBGHZ_62MOTES']
-#network_settings = ['OFDMSUBGHZ_62MOTES_STATLOGS','FSKSUBGHZ_62MOTES_STATLOGS']
-#network_settings = ['FSK1_Subghz_run_1','OFDM1_MCS3_Subghz_run_1','OQPSK_24GHz_run_1']
-#network_settings = ['FSK1_Subghz_4PPS_run_1','OFDM1_MCS3_Subghz_4PPS_run_1','OQPSK_24GHz_4PPS_run_1']
-#network_settings = ['OQPSK_24GHz_4PPS_run_1','OQPSK_24GHz_run_1']
-#network_settings = ['OFDM1_MCS3_Subghz_4PPS_run_1','OFDM1_MCS3_Subghz_run_1']
-#network_settings = ['OFDM1_MCS3_Subghz_50percent_density_run_1','OFDM1_MCS3_Subghz_4PPS_run_1','OFDM1_MCS3_Subghz_run_1']
-#network_settings = ['OFDM1_MCS3_Subghz_50percent_density_run_1','OQPSK_24GHz_50percent_density_run_1','FSK1_Subghz_50percent_density_run_1']
-#network_settings = ['FSK1_Subghz_10percent_disturbance','OQPSK_24GHz_10percent_disturbance_run_1']
-#network_settings = ['FSK_SUBGHZ_41SF','OFDM_SUBGHZ_41SF','OQPSK_24GHz_41SF']
-#run_id = "run_3"
-#network_settings = ['fsk_41sf_45nbrs','ofdm_41sf_45nbrs','oqpsk_41sf_45nbrs']
-#labels = ['FSK1_868MHz','OFDM_868MHz','OQPSK_2.4GHz']
-#network_settings = ['fsk_41sf_45nbrs','fsk_30ppm_101sf_2min626_3500desync']
-#labels = ['FSK1_868MHz_41SF','FSK1_868MHz_101SF']
 
-# network_settings = ['fsk_2','ofdm_5','oqpsk_2','hybrid_test2', 'hybrid_test_contention']
-# labels = ['FSK_868MHz','OFDM_868MHz','OQPSK_2.4GHz','Hybrid 6TiSCH','Hybrid 6TiSCH- Enhanced Join']
-
-# network_settings = ['fsk_2','g6_fsk_3', 'oqpsk_2','g6_oqpsk', 'ofdm_5', 'g6_ofdm']
-# labels = ['FSK ','FSK 6g Architecture','OQPSK','OQPSK 6g Architecture','OFDM', 'OFDM 6g Architecuture']
-
+#  make sure that g6tisch logs have the keyword "hybrid" in them
 network_settings = [
 'g6_fsk',
 'g6_ofdm',
 'g6_oqpsk',
-# 'g6_hybrid_qfm_152',
-'g6_hybrid_qfm_251',
-# 'g6_hybrid_qfm_10_dio_1_cell_261'
+'g6_hybrid_basicdio_251'
+
 ]
+
 labels = [
 'FSK_868MHz',
 'OFDM_868MHz',
 'OQPSK_2.4GHz',
-# 'g6TiSCH-OQPSK base',
-'g6TiSCH', #ofdm base
-# 'g6TiSCH-251-1-mincell'
+'g6TiSCH' #g6_hybrid_basicdio_251
+
 ]
 
 
-# network_settings = [ 'g6_hybrid_qfm_152','g6_hybrid_qfm_251']
-# labels = ['Hybrid 6TiSCH','Hybrid 6TiSCH OFDM base']
-
-run_id = "run_8"
+run_id = "run_16"
 
 log_dir_path = os.path.join(os.getcwd(), LOG_DIR_NAME,run_id)
 plot_dir_path = os.path.join(os.getcwd(), PLOT_DIR_NAME, run_id)
@@ -89,7 +65,7 @@ def std_add_subtract (data_list,std_list):
 #	print '{},{}'.format(x_axis[i],avg_dutyCycle[i],avg_latency[i],avg_pdr[i],avg_cellsUsage[i])
 
 
-XLIMIT = [3,90]
+XLIMIT = [3,90] # default [3,90]
 XLABEL = 'time (mins)'
 TYPE = 'mean' # mean
 iterate=-1
@@ -98,7 +74,7 @@ for network_setting in network_settings:
     iterate+=1
     figure_index=-1
     
-    global_stats, rpl_node_count,rpl_churn,timestamp,rpl_timestamp,time_to_firstpacket,pdr_table = \
+    global_stats, kpi_stats_by_mote, rpl_node_count,rpl_churn, rpl_phys,timestamp,rpl_timestamp,time_to_firstpacket,pdr_table = \
     getKPI.get_kpis(network_setting,0,90,3,log_dir_path) #default 0,90,3
 
     x_ax = timestamp
@@ -108,7 +84,7 @@ for network_setting in network_settings:
     plt.plot(x_ax, global_stats ['dutyCycle'][TYPE], label= labels [iterate])
     plt.fill_between( x_ax,global_stats ['dutyCycle']['first_q'],global_stats ['dutyCycle']['third_q'], alpha=0.2)
     plt.xlim(XLIMIT) 
-    plt.ylabel('radio duty cycle')
+    plt.ylabel('overall radio duty cycle (%)')
     plt.xlabel(XLABEL)
   
     figure_index+=1
@@ -122,7 +98,7 @@ for network_setting in network_settings:
     plt.plot(x_ax, global_stats ['dutyCycle_0'][TYPE], label= '{}-OQPSK'.format(labels [iterate]))
     plt.fill_between( x_ax,global_stats ['dutyCycle_0']['first_q'],global_stats ['dutyCycle_0']['third_q'], alpha=0.2)
     plt.xlim(XLIMIT) 
-    plt.ylabel('hybrid radio duty cycle breakdown (%)')
+    plt.ylabel('duty cycle of the different radios (%)')
     plt.xlabel(XLABEL)
     
     
@@ -136,19 +112,19 @@ for network_setting in network_settings:
 
     figure_index+=1
     plt.figure(figure_index)
+    if ("hybrid" in network_setting):
+        plt.plot(x_ax, global_stats ['dutyCycleTx_1'][TYPE], label= '{}-FSK'.format(labels [iterate]))
+        plt.fill_between( x_ax,global_stats ['dutyCycleTx_1']['first_q'],global_stats ['dutyCycleTx_1']['third_q'], alpha=0.2)
+        
+        plt.plot(x_ax, global_stats ['dutyCycleTx_2'][TYPE], label= '{}-OFDM'.format(labels [iterate]))
+        plt.fill_between( x_ax,global_stats ['dutyCycleTx_2']['first_q'],global_stats ['dutyCycleTx_2']['third_q'], alpha=0.2)
 
-    plt.plot(x_ax, global_stats ['dutyCycleTx_1'][TYPE], label= '{}-FSK'.format(labels [iterate]))
-    plt.fill_between( x_ax,global_stats ['dutyCycleTx_1']['first_q'],global_stats ['dutyCycleTx_1']['third_q'], alpha=0.2)
-    
-    plt.plot(x_ax, global_stats ['dutyCycleTx_2'][TYPE], label= '{}-OFDM'.format(labels [iterate]))
-    plt.fill_between( x_ax,global_stats ['dutyCycleTx_2']['first_q'],global_stats ['dutyCycleTx_2']['third_q'], alpha=0.2)
-
-    plt.plot(x_ax, global_stats ['dutyCycleTx_0'][TYPE], label= '{}-OQPSK'.format(labels [iterate]))
-    plt.fill_between( x_ax,global_stats ['dutyCycleTx_0']['first_q'],global_stats ['dutyCycleTx_0']['third_q'], alpha=0.2)
-    
-    plt.xlim(XLIMIT) 
-    plt.ylabel('hybrid radio transmission duty cycle breakdown (%)')
-    plt.xlabel(XLABEL)
+        plt.plot(x_ax, global_stats ['dutyCycleTx_0'][TYPE], label= '{}-OQPSK'.format(labels [iterate]))
+        plt.fill_between( x_ax,global_stats ['dutyCycleTx_0']['first_q'],global_stats ['dutyCycleTx_0']['third_q'], alpha=0.2)
+        
+        plt.xlim(XLIMIT) 
+        plt.ylabel('duty cycle of the different radios (%)')
+        plt.xlabel(XLABEL)
 
     figure_index+=1
     plt.figure(figure_index)
@@ -168,7 +144,7 @@ for network_setting in network_settings:
     plt.xlim(XLIMIT) 
     plt.ylabel('average end-to-end PDR')
     plt.xlabel(XLABEL)
-    # print 'PDR -----------'
+    print ('PDR -----------')
     # print global_stats ['pdr']
 
     figure_index+=1
@@ -207,7 +183,8 @@ for network_setting in network_settings:
     plt.plot(x_ax,global_stats ['maxBufferSize']['max_v'], label= labels [iterate])
     # plt.fill_between( x_ax,global_stats ['maxBufferSize']['first_q'],global_stats ['maxBufferSize']['third_q'], alpha=0.2)
     # plt.ylim(bottom=0) 
-    plt.xlim(XLIMIT) 
+    plt.xlim([30,90]) 
+    plt.yticks(range(0,21,2))
     plt.ylabel('maximum packet buffer occupancy in the network (packets)')
     plt.xlabel(XLABEL)
 
@@ -234,6 +211,7 @@ for network_setting in network_settings:
     plt.xlabel(XLABEL)
     plt.ylabel('network churn (RPL DAG Churn)')
     plt.xlim(XLIMIT) 
+    
 
     #cdf plot for time to first packet
     figure_index+=1
@@ -247,12 +225,26 @@ for network_setting in network_settings:
     plt.xlabel(XLABEL)
     plt.ylabel('portion of motes reporting data')
 
+    # hybrid radio distribution
+    figure_index+=1
+    plt.figure(figure_index)
+    if ("hybrid" in network_setting):
+        plt.plot(rpl_timestamp,rpl_phys [1], label= labels [iterate]+" FSK_868MHz")
+        plt.plot(rpl_timestamp,rpl_phys [2], label= labels [iterate]+" OFDM_868MHz")
+        plt.plot(rpl_timestamp,rpl_phys [0], label= labels [iterate]+" O-QPSK_2.4GHz")
+        plt.xlim([0,30])
+        max_tick = max(max(rpl_phys [1]),max(rpl_phys [2]),max(rpl_phys [0]))
+        # pdb.set_trace()
+        yint = range(0, 20, 2) # forcing int y axis
+        plt.xlabel(XLABEL)
+        plt.yticks(yint) 
+
+        plt.ylabel('number of data up-links')
 #saving the plots
 
-# print "----  PDR TABLE -----"
-# print (pdr_table)
-
-# print "----  End PDR TABLE -----"
+    # print "----  PDR TABLE -----"
+    # print (pdr_table)
+    # print "----  End PDR TABLE -----"
 # sys.exit()
 
 figure_index=-1
@@ -357,10 +349,20 @@ plt.savefig( os.path.join(os.getcwd(), plot_dir_path, 'time_firstpacket_cdf.png'
 figure_index+=1
 plt.figure(figure_index)
 plt.grid(True)
+plt.legend()    
+plt.savefig( os.path.join(os.getcwd(), plot_dir_path, 'rpl_phys.png') , bbox_inches='tight', dpi=300)
+
+figure_index+=1
+plt.figure(figure_index)
+plt.grid(True)
 plt.yscale('log')
 plt.hist(churn_a, density=False, bins=10, label=labels)
+# for a in churn_a:
+    # print sum(a)
 plt.legend()    
 plt.savefig( os.path.join(os.getcwd(), plot_dir_path, 'churn_pdf.png') , bbox_inches='tight', dpi=300)
+
+
 
 #plt.show()
 
