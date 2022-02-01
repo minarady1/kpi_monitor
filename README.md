@@ -6,7 +6,7 @@ PLotter tools are used to parse the logs, and plot different statistics in three
 - CDF plots, and 
 - PDF plots. 
 
-# Running instruction
+# Running instructions
 
 1. Run MQTT logger as: `python kpi_mqtt_logger.py <experiment_id>`: this will create a log sub-directory and will listen to the configured MQTT port. Received packets messages will be logged in JSONL file with data/time stamps and the experiment ID as in the example below:
 
