@@ -5,9 +5,11 @@ Author: Mina Rady <mina1.rady@orange.com>, July 2020
 import os
 import json
 import datetime
+import pdb
+import json
 import numpy as np
 
-SLOTDURATION = .04
+SLOTDURATION = .01
 BATTERY_WH=8.2
 def init_stat_info():
     return {
@@ -40,6 +42,50 @@ global_stats={
 "lifetime":init_stat_info()
 }
 
+def init_mote_info():
+    return {
+        "pdr":init_stat_info(),
+        "latency":init_stat_info(),
+        "dagRank":init_stat_info(),
+        "maxBufferSize":init_stat_info(),
+        "minBufferSize":init_stat_info(),
+        "numCellsUsage":init_stat_info(),
+        "numNeighbors":init_stat_info(),
+        "dutyCycle":init_stat_info(),
+        "dutyCycleTx":init_stat_info(),
+        "dutyCycle_0":init_stat_info(),
+        "dutyCycleTx_0":init_stat_info(),
+        "dutyCycle_1":init_stat_info(),
+        "dutyCycleTx_1":init_stat_info(),
+        "dutyCycle_2":init_stat_info(),
+        "dutyCycleTx_2":init_stat_info(),
+        "lifetime":init_stat_info()
+        }
+
+#  contains the stats per mote, mote_id> {kpi> info}
+mote_stats= {}
+
+#  contains the stats by mote per kpi, kpi> mote1, mote2 ...
+kpi_stats_by_mote= {
+"pdr":init_stat_info(),
+"latency":init_stat_info(),
+"dagRank":init_stat_info(),
+"maxBufferSize":init_stat_info(),
+"minBufferSize":init_stat_info(),
+"numCellsUsage":init_stat_info(),
+"numNeighbors":init_stat_info(),
+"dutyCycle":init_stat_info(),
+"dutyCycleTx":init_stat_info(),
+"dutyCycle_0":init_stat_info(),
+"dutyCycleTx_0":init_stat_info(),
+"dutyCycle_1":init_stat_info(),
+"dutyCycleTx_1":init_stat_info(),
+"dutyCycle_2":init_stat_info(),
+"dutyCycleTx_2":init_stat_info(),
+"lifetime":init_stat_info()
+}
+
+
 pdr_table={
     "motes":[],
     "pkt_count":[],
@@ -54,8 +100,9 @@ def data_describe (data):
     median = np.median(data)
     std = np.std(data)
     first_q = np.quantile(data, 0.25)
-    third_q = np.quantile(data, 0.75)   
-    return mean,median,std,min(data),max(data),first_q,third_q;
+    third_q = np.quantile(data, 0.75)
+    # pdb.set_trace()
+    return mean,median,std, np.min(np.array(data)), np.max(np.array(data)),first_q,third_q;
 
 def update_globalstats (kpi,raw):
     mean,median,std,min_v,max_v,first_q,third_q = data_describe(raw)
@@ -68,11 +115,62 @@ def update_globalstats (kpi,raw):
     global_stats [kpi]['third_q'].append(third_q)
     global_stats [kpi]['raw'].append(raw)
 
+def update_mote_kpi (src_id,kpi,raw):
+
+    mean,median,std,min_v,max_v,first_q,third_q = data_describe(raw)
+    if (src_id not in mote_stats):
+        mote_stats [src_id] = init_mote_info();
+    mote_stats [src_id][kpi] ['mean'].append(mean)
+    mote_stats [src_id][kpi] ['median'].append(median)
+    mote_stats [src_id][kpi] ['std'].append(std)
+    mote_stats [src_id][kpi] ['min_v'].append(min_v)
+    mote_stats [src_id][kpi] ['max_v'].append(max_v)
+    mote_stats [src_id][kpi] ['first_q'].append(first_q)
+    mote_stats [src_id][kpi] ['third_q'].append(third_q)
+    mote_stats [src_id][kpi] ['raw'].append(raw)
+
+    kpi_stats_by_mote [kpi] ['mean'].append(mean)
+    kpi_stats_by_mote [kpi] ['median'].append(median)
+    kpi_stats_by_mote [kpi] ['std'].append(std)
+    kpi_stats_by_mote [kpi] ['min_v'].append(min_v)
+    kpi_stats_by_mote [kpi] ['max_v'].append(max_v)
+    kpi_stats_by_mote [kpi] ['first_q'].append(first_q)
+    kpi_stats_by_mote [kpi] ['third_q'].append(third_q)
+    kpi_stats_by_mote [kpi] ['raw'].append(raw)
+    # print (json.dumps(kpi_stats_by_mote))
+    # pdb.set_trace()
+
+
 
 def clear_globalstats():
     global global_stats
+    global mote_stats
+    global kpi_stats_by_mote
     
     global_stats={
+    "pdr":init_stat_info(),
+    "latency":init_stat_info(),
+    "dagRank":init_stat_info(),
+    "maxBufferSize":init_stat_info(),
+    "minBufferSize":init_stat_info(),
+    "numCellsUsage":init_stat_info(),
+    "numNeighbors":init_stat_info(),
+    "dutyCycle":init_stat_info(),
+    "dutyCycleTx":init_stat_info(),
+    "dutyCycle_0":init_stat_info(),
+    "dutyCycleTx_0":init_stat_info(),
+    "dutyCycle_1":init_stat_info(),
+    "dutyCycleTx_1":init_stat_info(),
+    "dutyCycle_2":init_stat_info(),
+    "dutyCycleTx_2":init_stat_info(),
+    "lifetime":init_stat_info()
+    }
+
+    #  contains the stats per mote, mote_id> {kpi> info}
+    mote_stats= {}
+
+    #  contains the stats by mote per kpi, kpi> mote1, mote2 ...
+    kpi_stats_by_mote= {
     "pdr":init_stat_info(),
     "latency":init_stat_info(),
     "dagRank":init_stat_info(),
@@ -103,9 +201,19 @@ def datetime_arr_normalize (arr):
 
     return delta_arr
 
+def datetime_delta (ts1, ts2):
+    delta_arr = []
+    # pdb.set_trace()
+    ref = datetime.datetime.strptime(ts1, '%Y-%m-%d %H:%M:%S.%f')
+    dt = datetime.datetime.strptime(ts2, '%Y-%m-%d %H:%M:%S.%f')
+    delta = (dt-ref).total_seconds()
+
+    return delta
 # clculate expeted battery lifetime
 def compute_battery_lifetime_single (
     dutyCycle    , dutyCycleTx, phy):
+    
+
     Itx  = 0
     Irx  = 0
     vs = 0
@@ -113,21 +221,22 @@ def compute_battery_lifetime_single (
     if (phy =="ofdm" or phy =="fsk" ):
         Itx  = 62
         Irx  = 28
-        vs = 2.5
+        vs   = 2.5
     elif (phy=="oqpsk"):
         Itx  = 24
         Irx  = 20
-        vs = 3
+        vs   = 3
     else:
-        print "unknown phy detected in logs"
+        print ("unknown phy detected in logs")
     ptx = Itx*vs*0.001
     prx = Irx*vs*0.001
     E_day_wh = dutyCycleTx*24*ptx + dutyCycleRx*24*prx
-    days = BATTERY_WH/ E_day_wh
+    days = BATTERY_WH/ (E_day_wh)
     # print "--dc ",phy
     # print dutyCycle
     # print dutyCycleTx
     # print days
+    # print (E_day_wh, days)
     return days
 
         
@@ -162,13 +271,13 @@ def compute_battery_lifetime_hybrid (
     return days
 
 
-def get_kpis(network_setting, start_time_mins, max_duration_mins,window_size_mins, log_dir_path):
-    print "****"
-    print network_setting
-    print start_time_mins
-    print max_duration_mins
-    print window_size_mins
-    print "----"
+def get_kpis(network_setting, start_time_mins, max_duration_mins,window_size_mins, log_dir_path, mote_id=all):
+    print ("****")
+    print (network_setting)
+    print (start_time_mins)
+    print (max_duration_mins)
+    print (window_size_mins)
+    print ("----")
     
     
     # clearing the variables
@@ -183,25 +292,54 @@ def get_kpis(network_setting, start_time_mins, max_duration_mins,window_size_min
     rpl_timestamp_s    = []
     rpl_node_count = []
     rpl_churn = []
+    rpl_phys = {
+    0:[],
+    1:[],
+    2:[],
+    }
 
     # used cdf
     time_to_firstpacket = []
     time_to_firstpacket_dict = {}
     first_arrivals = []
-
+    first_ts = 0
+    check= 0
+    # process the entire file into a data structure
     for filename in os.listdir(log_dir_path):
         if ("log-kpis-"+network_setting in filename):
-            print filename
+            print (filename)
             file_dir=os.path.join(log_dir_path,filename)
             with open (file_dir) as f:
                 for line in f:
                     data=json.loads(line)
                     pkt_info=data['data']['pkt_info']
                     src_id = data['data']['pkt_info']['src_id']
+                    if (check==0):
+                        first_ts = data['timestamp']
+                        check =1
+                    # pdb.set_trace()
+                    if (mote_id!= all and str(mote_id)!=str(src_id)):
+                        continue
                     rpl_timestamp_s.append(data['timestamp'])
                     rpl_node_count.append(data['data']['rpl_node_count'])
                     rpl_churn.append(data['data']['rpl_churn'])
                     
+                    if "0" in data['data']["rpl_phy_stats"]:
+                        rpl_phys[0].append(data['data']["rpl_phy_stats"]["0"])
+                    else:
+                        rpl_phys[0].append(0)
+
+                    if "1" in data['data']["rpl_phy_stats"]:
+                        rpl_phys[1].append(data['data']["rpl_phy_stats"]["1"])
+                    else:
+                        rpl_phys[1].append(0)
+
+                    if "2" in data['data']["rpl_phy_stats"]:
+                        rpl_phys[2].append(data['data']["rpl_phy_stats"]["2"])
+                    else:
+                        rpl_phys[2].append(0)
+
+
                     phy = ""
                     if ("hybrid" in network_setting):
                         phy = "hybrid"
@@ -212,7 +350,7 @@ def get_kpis(network_setting, start_time_mins, max_duration_mins,window_size_min
                     elif  ("ofdm" in network_setting):
                         phy="ofdm"
                     else:
-                        print "unknown phy in log file name"
+                        print ("unknown phy in log file name")
 
                     dutyCycle      = float(pkt_info['numTicksOn'])/float(pkt_info['numTicksInTotal']) 
                     dutyCycleTx    = float(pkt_info['numTicksTx'])/float(pkt_info['numTicksInTotal']) 
@@ -221,15 +359,17 @@ def get_kpis(network_setting, start_time_mins, max_duration_mins,window_size_min
                     dutyCycle_1    = float(pkt_info['numTicksOn_1'])/float(pkt_info['numTicksInTotal']) 
                     dutyCycleTx_1  = float(pkt_info['numTicksTx_1'])/float(pkt_info['numTicksInTotal']) 
                     dutyCycle_2    = float(pkt_info['numTicksOn_2'])/float(pkt_info['numTicksInTotal']) 
-                    dutyCycleTx_2  = float(pkt_info['numTicksTx_2'])/float(pkt_info['numTicksInTotal']) 
+                    dutyCycleTx_2  = float(pkt_info['numTicksTx_2'])/float(pkt_info['numTicksInTotal'])
+                    singledc       = (float(pkt_info['numTicksOn_0'])+ float(pkt_info['numTicksOn_1'])+float(pkt_info['numTicksOn_2']))/float(pkt_info['numTicksInTotal'])
+                    singledc_tx    = (float(pkt_info['numTicksTx_0'])+ float(pkt_info['numTicksTx_1'])+float(pkt_info['numTicksTx_2']))/float(pkt_info['numTicksInTotal'])
                     lifetime = 0
                     if (phy =="hybrid"):
                         lifetime = compute_battery_lifetime_hybrid(
                             dutyCycle_0, dutyCycleTx_0,
                             dutyCycle_1, dutyCycleTx_1,
                             dutyCycle_2, dutyCycleTx_2)
-                    else:
-                        lifetime = compute_battery_lifetime_single (dutyCycle,dutyCycleTx,phy)
+                    else: # since only one variable is assigned and the others are 0
+                        lifetime = compute_battery_lifetime_single (singledc,singledc_tx,phy)
 
                     #populate dictionary of avg _kpi for each mote 
                     if src_id in raw_data:
@@ -252,10 +392,11 @@ def get_kpis(network_setting, start_time_mins, max_duration_mins,window_size_min
                             raw_data[src_id]['dutyCycle_2'].append(dutyCycle_2*100)
                             raw_data[src_id]['dutyCycleTx_2'].append(dutyCycleTx_2*100)
                             raw_data[src_id]['lifetime'].append(lifetime)
-                            raw_data[src_id]['timedelta'].append(data["data"]['time_elapsed']["seconds"])
+                            # raw_data[src_id]['timedelta'].append(data["data"]['time_elapsed']["seconds"])
+                            raw_data[src_id]['timedelta'].append(datetime_delta(first_ts,data['timestamp']))
                     else:
 
-
+                        # pdb.set_trace()
                         raw_data[src_id] = {
                             'counter'        : [pkt_info['counter']],
                             'latency'        : [float(pkt_info['latency'])*float(SLOTDURATION)],
@@ -274,21 +415,26 @@ def get_kpis(network_setting, start_time_mins, max_duration_mins,window_size_min
                             'dutyCycle_2'    : [dutyCycle_2   *100],
                             'dutyCycleTx_2'  : [dutyCycleTx_2 *100],
                             'lifetime'       : [lifetime ],
-                            'timedelta'      : [data["data"]['time_elapsed']["seconds"]],
+                            # 'timedelta'      : [data["data"]['time_elapsed']["seconds"]],
+                            'timedelta'      : [datetime_delta(first_ts,data['timestamp'])]
+
                         }
 
                     #processing time to first packet
                     if src_id not in first_arrivals:
                         first_arrivals.append(src_id)
-                        secs  = float(data['data']['time_elapsed']['seconds'])
-                        usecs = float(data['data']['time_elapsed']['microseconds'])
-                        time_elapsed_secs = secs + (usecs/1e6)
+                        # secs  = float(data['data']['time_elapsed']['seconds'])
+                        # usecs = float(data['data']['time_elapsed']['microseconds'])
+                        time_elapsed_secs =datetime_delta(first_ts,data['timestamp'])# secs + (usecs/1e6)
+                        # print time_elapsed_secs
                         time_to_firstpacket.append(float(time_elapsed_secs))
                         time_to_firstpacket_dict [src_id] = float(time_elapsed_secs);
 
             continue
         else:
             continue
+
+    pdb.set_trace()
     raw_data_table = {}
     for src_id in raw_data:
         table = zip(    raw_data[src_id]['timedelta'],
@@ -333,7 +479,7 @@ def get_kpis(network_setting, start_time_mins, max_duration_mins,window_size_min
 
     
     while t2<=max_duration:
-        # print "looping"
+        # print "iterating..."
         # clear network-level arrays
         arr_pdr_all           = []
         arr_latency_all       = []
@@ -358,9 +504,10 @@ def get_kpis(network_setting, start_time_mins, max_duration_mins,window_size_min
         for src_id in raw_data_table:
             #filter the data of the current window
             window_data = filter(lambda x: (x[0]>=t1 and x[0]<t2), raw_data_table [src_id])
-            
+            # pdb.set_trace()
             #if there is any data for this mote within this window, calculate the stats
             if window_data:
+
                 #decoupling the columns
                 tuples = zip(*window_data)
                 # initializing the arrays
@@ -401,7 +548,7 @@ def get_kpis(network_setting, start_time_mins, max_duration_mins,window_size_min
                 dutyCycleTx_1,\
                 dutyCycle_2,\
                 dutyCycleTx_2,\
-                lifetime = [ list(tuple) for tuple in  tuples]
+                lifetime = list (tuples)# [ list(tuple) for tuple in  tuples]
 
                 #now getting all the local averages for this mote/window combination
 
@@ -446,8 +593,12 @@ def get_kpis(network_setting, start_time_mins, max_duration_mins,window_size_min
                 arr_dutyCycle_2_all.extend(dutyCycle_2)
                 arr_dutyCycleTx_2_all.extend(dutyCycleTx_2)
                 arr_lifetime_all.extend(lifetime)
-
+            # process stats per mote
+            update_mote_kpi(str(src_id), 'lifetime',lifetime)
+        # pdb.set_trace()
         # at this point, you have all the data for this window.
+        # print (t1)
+        # print (t2)
         update_globalstats('pdr',arr_pdr_all)
 
         update_globalstats('latency',arr_latency_all)
@@ -489,6 +640,6 @@ def get_kpis(network_setting, start_time_mins, max_duration_mins,window_size_min
 
     #used for rpl
     rpl_timestamp = datetime_arr_normalize(rpl_timestamp_s)
-    return  global_stats, rpl_node_count,rpl_churn,timestamp,rpl_timestamp,time_to_firstpacket,pdr_table;
+    return  global_stats, kpi_stats_by_mote, rpl_node_count,rpl_churn, rpl_phys,timestamp,rpl_timestamp,time_to_firstpacket,pdr_table;
 
 # get_kpis ("fsk_2",os.path.join(os.getcwd(), "logs","run_5"))

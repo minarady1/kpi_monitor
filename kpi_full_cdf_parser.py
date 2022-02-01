@@ -6,6 +6,7 @@ Author: Mina Rady <mina1.rady@orange.com>, July 2020
 import glob
 import os
 import json
+import pdb
 import datetime
 import matplotlib.pyplot as plt
 import numpy as np
@@ -44,23 +45,27 @@ YLABEL=''
 # labels = ['FSK_868MHz','OFDM_868MHz','OQPSK_2.4GHz','Hybrid 6TiSCH-OQPSK base','Hybrid 6TiSCH-OFDM base']
 
 network_settings = [
-'g6_fsk',
-'g6_ofdm',
-'g6_oqpsk',
-# 'g6_hybrid_qfm_152',
-'g6_hybrid_qfm_251',
-# 'g6_hybrid_qfm_10_dio_1_cell_251'
+# 'g6_fsk',
+# 'g6_ofdm',
+# 'g6_oqpsk',
+
+# 'g6_hybrid_basicdio_251',
+'g6TiSCH_6DYN_hybrid',
+
 ]
 labels = [
-'FSK_868MHz',
-'OFDM_868MHz',
-'OQPSK_2.4GHz',
-# 'g6TiSCH-OQPSK base',
-'g6TiSCH', #ofdm base
-# 'g6TiSCH-251-1-mincell'
-]
 
-run_id = "run_8"
+# 'FSK_868MHz',
+# 'OFDM_868MHz',
+# 'OQPSK_2.4GHz',
+
+'g6TiSCH8_251_242', #g6_hybrid_basicdio_251
+
+]
+# network_settings = [ 'g6_hybrid_qfm_152','g6_hybrid_qfm_251']
+# labels = ['Hybrid 6TiSCH','Hybrid 6TiSCH OFDM base']
+
+run_id = "run_17"
 
 log_dir_path = os.path.join(os.getcwd(), LOG_DIR_NAME,run_id)
 
@@ -100,14 +105,20 @@ class FullCDF:
         plt.figure(0)
         for network_setting in network_settings: 
             iterate+=1
-            global_stats, rpl_node_count,rpl_churn,timestamp,rpl_timestamp,time_to_firstpacket,pdr_table =\
-                getKPI.get_kpis(network_setting,self.t1,self.t2,self.t2-self.t1-1,log_dir_path)
+            global_stats, kpi_stats_by_mote, rpl_node_count,rpl_churn, rpl_phys,timestamp,rpl_timestamp,time_to_firstpacket,pdr_table =\
+                getKPI.get_kpis(network_setting,self.t1,self.t2,self.t2-self.t1,log_dir_path)
             x_ax = timestamp
             sorted_data = []
             num_bins = 100
             i = 3
             while i < 90-3:
                 r =  global_stats [kpi_name]['raw'][0]
+                # r = kpi_stats_by_mote [kpi_name]['mean']
+                # print r
+                # pdb.set_trace()
+                # print(global_stats [kpi_name]['min_v'][0])
+                # print(global_stats [kpi_name]['max_v'][0])
+                # print(global_stats [kpi_name]['ma_v'][0])
                 print "plotting ", network_setting
                 print len(r), " data points"
                 sorted_data=np.sort(r)
@@ -129,7 +140,6 @@ class FullCDF:
             os.makedirs(plot_dir_path)    
         plt.savefig( os.path.join(os.getcwd(), plot_dir_path, '{}_cdf_plot_full_{}.png'.format(kpi_name,TAG)) , bbox_inches='tight', dpi=300)
         print "finished ", kpi_name
-     
 
 name = sys.argv[1]
 t1 = int(sys.argv[2])

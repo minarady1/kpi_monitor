@@ -7,9 +7,9 @@ import datetime
 import utils
 import click
 import json
-
+import winsound
 EXPERIMENT_ID = "hybrid_test_cjoin"
-run_id = "run_8"
+run_id = "run_17"
 LOG_DIR_NAME = 'logs'
 log_file_path = ''
 first_record = True
@@ -18,9 +18,13 @@ def on_connect(client, userdata, flags, rc):
     if rc == 0:
  
         print("Connected to broker")
- 
+
         global Connected                #Use global variable
-        Connected = True                #Signal connection 
+        Connected = True                #Signal connection
+        frequency = 2500  # Set Frequency To 2500 Hertz
+        duration = 500  # Set Duration To 1000 ms == 1 second
+        winsound.Beep(frequency, duration)
+        winsound.Beep(frequency, duration)
  
     else:
  
@@ -76,6 +80,7 @@ def log_data (data):
 
 
 EXPERIMENT_ID = sys.argv[1]
+
 Connected = False   #global variable for the state of the connection
  
 broker_address= "argus.paris.inria.fr"  #Broker address
@@ -90,7 +95,7 @@ client.on_message= on_message                      #attach function to callback
 
 log_file_path = prepare_log_file() 
 print log_file_path
-client.connect(broker_address, port=port)          #connect to broker
+client.connect(broker_address, port=port,keepalive=60)          #connect to broker
  
 client.loop_start()        #start the loop
  

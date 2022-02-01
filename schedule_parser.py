@@ -1,7 +1,15 @@
 import collections
-import fskData
+import scheduleData
+import os
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd  
 
-data= fskData.data
+
+oqpskData= scheduleData.oqpskData
+ofdmData = scheduleData.ofdmData
+fskData = scheduleData.fskData
+
 slot_usage_count_theoretical =[]
 slot_usage_count =[]
 res_anycast_usage_map ={}
@@ -74,182 +82,99 @@ def estimate_conflict (mote_list):
 
 
 
-temp ={}
-adjacent_pairs = []
-bad_neighbors =  {}
-my_neighbors = {}
-all_neighbors = []
-for m in data:
-    my_neighbors = {}
-    neigbors = data[m].get("Neighbors")
-    if neigbors:
-        for n in neigbors:
-            my_neighbors [n['addr']]=n
-            all_neighbors.append (n['addr'])
-
-    s = data[m].get("Schedule")
-    if s:                              
-        for slot in s:
-            if (slot ['numTx']>slot ['numTxACK']):
-                print "packet loss {}".format(slot ['numTx']-slot ['numTxACK'])
-
-                if ( slot['neighbor'] in bad_neighbors):
-                    bad_neighbors [slot['neighbor']]['loss'].append (slot ['numTx']-slot ['numTxACK'])
-                else:
-                    bad_neighbors [slot['neighbor']] ={'loss': [slot ['numTx']-slot ['numTxACK']],
-                    'desc': my_neighbors [slot['neighbor']]
-                    }
-
-            n = slot ['neighbor']
-            if (n!=  ' (None)' and slot ['shared']==0):
-                slot_usage_count.append(slot ['slotOffset'])
-                
-                if n == ' (anycast)':
-                    r = res_anycast_usage_map.get((slot ['slotOffset'],slot ['channelOffset']))
-                    if (r):
-                        res_anycast_usage_map [slot ['slotOffset'],slot ['channelOffset']]  +=1
-                        # print "***conflict {},{},{},{}".format(m,n,slot ['slotOffset'],slot ['channelOffset'])
-                    else:
-                        res_anycast_usage_map [slot ['slotOffset'],slot ['channelOffset']]  = 1
-                else:
-                    r = res_p2p_usage_map.get((slot ['slotOffset'],slot ['channelOffset']))
-                    if (r):
-                        res_p2p_usage_map [slot ['slotOffset'],slot ['channelOffset']]  +=1
-                        #del res_p2p_awkward_usage_map [slot ['slotOffset'],slot ['channelOffset']] 
-                    else:
-                        res_p2p_usage_map [slot ['slotOffset'],slot ['channelOffset']]  = 1
-                        #res_p2p_awkward_usage_map [slot ['slotOffset'],slot ['channelOffset']]  = n
-
-                if n != ' (anycast)':
-                    if(are_adjacent(m,n)):
-                        n_short_addr = n[-11:-6].replace('-','')
-                        adjacent_pairs.append([m,n_short_addr])
-print "*********"
-print res_p2p_usage_map
-print "*********"
-print "all  neighbors"
-print (set(all_neighbors))
-print "*********"
-print "bad neighbors"
-# print bad_neighbors
-print ("addr\trank\t#nodes\tlosstotal\tloss")
-for n in bad_neighbors:
-    print ("{}\t{}\t{}\t{}\t{}".format(
-        bad_neighbors[n]["desc"] ['addr'],
-        bad_neighbors[n]["desc"] ['DAGrank'],
-        len(bad_neighbors[n]['loss']),
-        sum(bad_neighbors[n]['loss']),
-        bad_neighbors[n]['loss']
-    ))
+def plot(data,label,figureIndex):
+    dedicated_etx = []
+    shared_rx = []
+    shared_etx=[]
 
 
-print "Number of total motes in the network:"
-print len(data.keys())
+    for m in data:
+        s = data[m].get("Schedule")
+        if s:                              
+            for slot in s:
+                if ( slot ['numTx']>0):
+                    etx = round(float(slot ['numTx']+1)/float(slot ['numTxACK']+1),2)
+                    if (slot['neighbor']!=  ' (None)' and slot ['shared']==0):
+                        dedicated_etx.append(etx)
+                        # print "dedicated eTx {} / {} = {}".format(slot ['numTx'], slot ['numTxACK'], etx)
+                    if (slot ['shared']==1):
+                        shared_etx.append(etx)
+                        # print "shared    eTx {} / {} = {}".format(slot ['numTx'], slot ['numTxACK'], etx)
+ 
+                if (slot ['shared']==1 and slot ['numRx']>0):
+                    shared_rx.append(slot ['numRx'])
+                    # print "shared    rx  {}".format(slot ['numRx'])
 
-print "Number of adjacent pairs in the network:"
-print len(adjacent_pairs)
+    plt.figure(figureIndex)
+    data_list=[]
+    data_list.append(np.array(dedicated_etx))
+    plt.hist(data_list, bins = 15, label=label+" dedicated links")
+    print (len(data_list))
+    data_list=[]
+    print (len(data_list))
+    data_list.append(np.array(shared_etx))
+    plt.hist(data_list, bins = 15,label= label+" shared links")
+    plt.xlabel("ETX")
+    # plt.ylabel('Number of data samples')
+    plt.ylabel("Mote Count")
+    plt.yscale('log')
+    plt.grid(True)
+    plt.legend()  
+    plt.savefig(os.path.join(os.getcwd(),label+"_pdf_etx.png"))
+
+    plt.figure(figureIndex+1)
+    data_list=[]
+    print (len(data_list))
+    data_list.append(np.array(shared_rx))
+    plt.hist(data_list, bins = 15,label= label+" shared links")
+    plt.xlabel("Rx")
+    # plt.ylabel('Number of data samples')
+    plt.ylabel("Number of Slots")
+    plt.yscale('log')
+    plt.grid(True)
+    plt.legend()  
+    plt.savefig(os.path.join(os.getcwd(),label+"_pdf_rx.png"))
+
+def plotAggregate(data,label,figureIndex):
+    dedicated_etx = []
+    shared_rx = []
+    shared_etx=[]
+    for m in data:
+        s = data[m].get("Schedule")
+        if s:                              
+            for slot in s:
+                if ( slot ['numTx']>0):
+                    etx = round(float(slot ['numTx']+1)/float(slot ['numTxACK']+1),2)
+                    if (slot['neighbor']!=  ' (None)' and slot ['shared']==0):
+                        dedicated_etx.append(etx)
+                        # print "dedicated eTx {} / {} = {}".format(slot ['numTx'], slot ['numTxACK'], etx)
+                    if (slot ['shared']==1):
+                        shared_etx.append(etx)
+                        # print "shared    eTx {} / {} = {}".format(slot ['numTx'], slot ['numTxACK'], etx)
+ 
+                if (slot ['shared']==1 and slot ['numRx']>0):
+                    shared_rx.append(slot ['numRx'])
+                    print "shared    rx  {}".format(slot ['numRx'])
+
+    plt.figure(figureIndex)
+    data_list=[]
+    data_list.append(np.array(shared_rx))
+    sorted_data=np.sort(data_list)
+    counts, bin_edges = np.histogram (sorted_data, bins=30, density=True)
+    cdf = np.cumsum (counts)
+    plt.plot ( bin_edges[1:], cdf/cdf[-1],label= label)
+    plt.xlabel("Rx")
+    # plt.ylabel('Number of data samples')
+    plt.ylabel("Portion of slots")
+    plt.grid(True)
+    plt.legend()  
+    plt.savefig(os.path.join(os.getcwd(),"cdf_rx_all.png"))
 
 
-print "\n\n----- Anycast Resource Conflict Measurements-----"
+plot(oqpskData,"oqpsk",0)
+plot(ofdmData,"ofdm",2)
+plot(fskData,"fsk",4)
 
-res_anycast_usage_count = res_anycast_usage_map.values()
-counter=collections.Counter(res_anycast_usage_count)
-
-print "Resource usage histogram:"
-print(counter)
-
-print "Minimum count of resource conflicts in the network:"
-arr = get_conflicts(res_anycast_usage_count)
-print (sum(arr))
-
-print "Total number of nodes affected with resource conflicts:"
-# [4, 4, 2, 1, 2]
-#print(counter.keys())
-print(len(arr))
-
-
-print "\n\n----- P2P Resource Conflict Measurements-----"
-res_p2p_usage_count = res_p2p_usage_map.values()
-counter=collections.Counter(res_p2p_usage_count)
-print "Conflicting Resources"
-print res_p2p_usage_map.keys() 
-print("{" + "\n".join("{!r}: {!r},".format(k, v) for k, v in res_p2p_usage_map.items()) + "}")
-
-print list
-
-print "Resource usage histogram:"
-print(counter)
-
-print "Minimum count of resource conflicts in the network:"
-arr = get_conflicts(res_p2p_usage_count)
-print (sum(arr))
-
-print "Total number of nodes affected with resource conflicts:"
-# [4, 4, 2, 1, 2]
-#print(counter.keys())
-print(len(arr))
-
-print "\n\n----- P2P Asymmetric Resource Allocation Measurements-----"
-res_p2p_awkward_usage_count = res_p2p_awkward_usage_map.values()
-counter=collections.Counter(res_p2p_awkward_usage_count)
-
-print "Resource usage histogram:"
-print(counter)
-
-print "Minimum count of resource conflicts in the network:"
-arr = get_conflicts(res_p2p_awkward_usage_count)
-print (sum(arr))
-
-print "Total number of nodes affected with resource conflicts:"
-# [4, 4, 2, 1, 2]
-#print(counter.keys())
-print(len(arr))
-
-print "----- Slot Conflict Estimation from data -----"
-estimate_conflict (data.keys())
-
-print "----- Resource Conflict Estimation from mote_list-----"
-motes =["b5d8",
-"b48d",
-"b622",
-"b640",
-"b629",
-"b646",
-"b647",
-"b602",
-"b61c",
-"b61a",
-"b5e7",
-"b462",
-"b498",
-"b5a9",
-"b557",
-"b558",
-"b588",
-"b53d",
-"b5a3",
-"b4aa",
-"b55b",
-"b648",
-"b57e",
-"b595",
-"b63a",
-"b638",
-"b593",
-"b618",
-"b5b5",
-"b5f8",
-"b5b7",
-"b58c",
-"b60b",
-"b5f1",
-"b5f3",
-"b5f2",
-"b5bf",
-"b605",
-"b563",
-"b571",
-"b565",
-"b612"]
-estimate_conflict(motes)
-
+plotAggregate(oqpskData,"oqpsk",6)
+plotAggregate(ofdmData,"ofdm",6)
+plotAggregate(fskData,"fsk",6)
