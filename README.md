@@ -1,7 +1,7 @@
 # Overview
 
-KPI Monitor a Python tool for logging and plotting IoT experiments. It is used for the experiments on the OpenTestbed. It is usable used to log messages containting measurements in JSON format received over MQTT from IoT devices. 
-PLotter tools are used to parse the logs, and plot different statistics in three formats: 
+KPI Monitor a Python tool for logging and plotting IoT experiments. It is used for the experiments on the OpenTestbed. It is used to log messages containting measurements in JSON format received over MQTT from IoT devices. 
+Plotter tools are used to parse the logs, and plot different statistics in three formats: 
 - Time-series line charts, 
 - CDF plots, and 
 - PDF plots. 
